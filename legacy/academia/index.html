@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Academia Corporativa · Luís Albert Advocacia</title>
+  <link rel="stylesheet" href="../core/style.css">
+  <style>
+    /* page-header herdado de style.css — teal LAADV */
+
+    /* Curso card */
+    .curso-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      transition: box-shadow 0.2s;
+    }
+    .curso-card:hover { box-shadow: var(--shadow-md); }
+    /* .curso-icon herdado de style.css */
+    .curso-info { flex: 1; }
+    .curso-info h3 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .curso-info .meta { font-size: 12px; color: var(--text-muted); display: flex; gap: 14px; margin-bottom: 10px; }
+    .progress-bar {
+      height: 6px;
+      background: var(--surface-3);
+      border-radius: 99px;
+      overflow: hidden;
+      margin-bottom: 4px;
+    }
+    .progress-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.8s ease; }
+    .progress-label { font-size: 11px; color: var(--text-muted); }
+    .curso-action { flex-shrink: 0; }
+  </style>
+</head>
+<body>
+
+<div id="topbar-container"></div>
+
+<!-- Sub nav -->
+<div class="sub-nav">
+  <div class="sub-nav-left">
+    <a href="/index.html" class="back-btn">← Portal</a>
+    <div class="sub-nav-sep"></div>
+    <span class="sub-nav-title">Academia Corporativa</span>
+  </div>
+</div>
+
+<!-- Header -->
+<div class="page-header">
+  <div style="max-width:1100px;margin:0 auto">
+    <h1>🎓 Academia Corporativa</h1>
+    <p>Trilhas de treinamento, vídeos instrucionais e controle de presença</p>
+  </div>
+</div>
+
+<!-- Main -->
+<main class="page-main pb-ake">
+
+  <!-- Stats rápidos -->
+  <div class="grid-4 mb-3">
+    <div class="stat-card card card-pad" style="display:flex;gap:14px;align-items:center">
+      <div style="font-size:22px">📚</div>
+      <div><div class="stat-value" id="s-cursos">–</div><div class="stat-label">Cursos ativos</div></div>
+    </div>
+    <div class="stat-card card card-pad" style="display:flex;gap:14px;align-items:center">
+      <div style="font-size:22px">✅</div>
+      <div><div class="stat-value" id="s-concluidos">–</div><div class="stat-label">Conclusões no mês</div></div>
+    </div>
+    <div class="stat-card card card-pad" style="display:flex;gap:14px;align-items:center">
+      <div style="font-size:22px">⏱</div>
+      <div><div class="stat-value">14h</div><div class="stat-label">Média horas/colaborador</div></div>
+    </div>
+    <div class="stat-card card card-pad" style="display:flex;gap:14px;align-items:center">
+      <div style="font-size:22px">🏆</div>
+      <div><div class="stat-value">12</div><div class="stat-label">Certificados emitidos</div></div>
+    </div>
+  </div>
+
+  <!-- Cursos -->
+  <div class="flex justify-between items-center mb-2">
+    <p class="section-label" style="margin-bottom:0">Cursos disponíveis</p>
+    <button class="btn btn-primary btn-sm" onclick="TC.toast.info('Novo curso — em desenvolvimento.')">+ Novo Curso</button>
+  </div>
+
+  <div id="cursos-list" style="display:flex;flex-direction:column;gap:14px;margin-bottom:32px"></div>
+
+  <!-- Presença -->
+  <div class="flex justify-between items-center mb-2 mt-4">
+    <p class="section-label" style="margin-bottom:0">Lista de Presença</p>
+    <button class="btn btn-ghost btn-sm" onclick="TC.toast.info('Exportar presença — em desenvolvimento.')">Exportar CSV</button>
+  </div>
+  <div class="card card-pad">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Colaborador</th>
+          <th>Curso</th>
+          <th>Setor</th>
+          <th>Data</th>
+          <th>Situação</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Ana Silva</td><td>Integração e Onboarding</td><td>RH</td><td>15/05/2025</td><td><span class="badge badge-green">Concluído</span></td></tr>
+        <tr><td>Bruno Matos</td><td>Segurança no Trabalho</td><td>Operações</td><td>17/05/2025</td><td><span class="badge badge-green">Concluído</span></td></tr>
+        <tr><td>Diego Lima</td><td>Excel Avançado</td><td>Adm.</td><td>22/05/2025</td><td><span class="badge badge-yellow">Em andamento</span></td></tr>
+        <tr><td>Eva Pereira</td><td>Comunicação Corporativa</td><td>Operações</td><td>–</td><td><span class="badge badge-red">Pendente</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</main>
+
+<footer class="ake-bar">
+  <span><span class="ake-dot-live"></span>AKE/UFT-1.0 online</span>
+  <span id="ake-info">–</span>
+  <span id="ake-ts">–</span>
+</footer>
+
+<script src="../core/treinamento-core.js"></script>
+<script>
+  TC.initPlatform('academia');
+  const user = TC.auth.requireModule('academia');
+  if (!user) throw new Error('acesso negado');
+
+  TC.renderTopbar('topbar-container');
+
+  const cursos = TC.data.getCursos();
+  document.getElementById('s-cursos').textContent     = cursos.filter(c => c.status === 'ativo').length;
+  document.getElementById('s-concluidos').textContent = cursos.reduce((s, c) => s + c.concluidos, 0);
+
+  const list = document.getElementById('cursos-list');
+  cursos.forEach(c => {
+    const pct = TC.utils.percent(c.concluidos, c.total);
+    list.insertAdjacentHTML('beforeend', `
+      <div class="curso-card">
+        <div class="curso-icon">📖</div>
+        <div class="curso-info">
+          <h3>${c.titulo}</h3>
+          <div class="meta">
+            <span>⏱ ${c.duracao}</span>
+            <span>👥 ${c.setor}</span>
+            <span class="badge ${c.status === 'ativo' ? 'badge-green' : 'badge-yellow'}">${c.status}</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+          <div class="progress-label">${c.concluidos} / ${c.total} colaboradores — ${pct}%</div>
+        </div>
+        <div class="curso-action">
+          <button class="btn btn-ghost btn-sm" onclick="TC.toast.info('Acessar curso — em desenvolvimento.')">Acessar</button>
+        </div>
+      </div>`);
+  });
+</script>
+</body>
+</html>

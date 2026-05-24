@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Compras · Luís Albert Advocacia</title>
+  <link rel="stylesheet" href="../core/style.css">
+  <style>
+    /* page-header herdado de style.css — teal LAADV */
+
+    .status-aprovado  { background: var(--success-light); color: #065F46; }
+    .status-pendente  { background: var(--warning-light); color: #92400E; }
+    .status-reprovado { background: var(--danger-light);  color: #991B1B; }
+
+    /* modal herdado de style.css */
+  </style>
+</head>
+<body>
+
+<div id="topbar-container"></div>
+
+<div class="sub-nav">
+  <div class="sub-nav-left">
+    <a href="/index.html" class="back-btn">← Portal</a>
+    <div class="sub-nav-sep"></div>
+    <span class="sub-nav-title">Compras</span>
+  </div>
+  <div>
+    <button class="btn btn-primary btn-sm" onclick="openModal()">+ Nova Requisição</button>
+  </div>
+</div>
+
+<div class="page-header">
+  <div style="max-width:1100px;margin:0 auto">
+    <h1>🛒 Compras</h1>
+    <p>Requisições de compra, aprovações e controle de fornecedores</p>
+  </div>
+</div>
+
+<main class="page-main pb-ake">
+
+  <!-- Stats -->
+  <div class="grid-4 mb-3">
+    <div class="card card-pad" style="display:flex;gap:14px;align-items:center">
+      <div style="font-size:22px">📋</div>
+      <div><div class="stat-value" id="s-total">–</div><div class="stat-label">Requisições no mês</div></div>
+    </div>
+    <div class="card card-pad" style="display:flex;gap:14px;align-items:center">
+      <div style="font-size:22px">⏳</div>
+      <div><div class="stat-value" id="s-pendentes">–</div><div class="stat-label">Aguardando aprovação</div></div>
+    </div>
+    <div class="card card-pad" style="display:flex;gap:14px;align-items:center">
+      <div style="font-size:22px">✅</div>
+      <div><div class="stat-value" id="s-aprovados">–</div><div class="stat-label">Aprovadas</div></div>
+    </div>
+    <div class="card card-pad" style="display:flex;gap:14px;align-items:center">
+      <div style="font-size:22px">💰</div>
+      <div><div class="stat-value" id="s-valor">–</div><div class="stat-label">Total aprovado</div></div>
+    </div>
+  </div>
+
+  <!-- Tabela requisições -->
+  <div class="flex justify-between items-center mb-2">
+    <p class="section-label" style="margin-bottom:0">Requisições de compra</p>
+    <button class="btn btn-ghost btn-sm" onclick="TC.toast.info('Exportar — em desenvolvimento.')">Exportar</button>
+  </div>
+  <div class="card" style="overflow:hidden">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Nº</th>
+          <th>Item</th>
+          <th>Solicitante</th>
+          <th>Setor</th>
+          <th>Valor</th>
+          <th>Data</th>
+          <th>Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="req-body"></tbody>
+    </table>
+  </div>
+
+  <!-- Fluxo de aprovação -->
+  <div class="mt-4 mb-2">
+    <p class="section-label" style="margin-bottom:0">Como funciona o fluxo</p>
+  </div>
+  <div class="card card-pad">
+    <div class="grid-4" style="gap:0">
+      <div style="text-align:center;padding:16px">
+        <div style="font-size:32px;margin-bottom:8px">📝</div>
+        <div style="font-weight:600;font-size:13px;margin-bottom:4px">1. Solicitação</div>
+        <div style="font-size:12px;color:var(--text-muted)">Colaborador abre a requisição com item e justificativa</div>
+      </div>
+      <div style="text-align:center;padding:16px">
+        <div style="font-size:32px;margin-bottom:8px">👤</div>
+        <div style="font-weight:600;font-size:13px;margin-bottom:4px">2. Gestor</div>
+        <div style="font-size:12px;color:var(--text-muted)">Gestor de setor analisa e aprova ou reprova</div>
+      </div>
+      <div style="text-align:center;padding:16px">
+        <div style="font-size:32px;margin-bottom:8px">🛒</div>
+        <div style="font-weight:600;font-size:13px;margin-bottom:4px">3. Compras</div>
+        <div style="font-size:12px;color:var(--text-muted)">Setor de compras recebe a ordem consolidada</div>
+      </div>
+      <div style="text-align:center;padding:16px">
+        <div style="font-size:32px;margin-bottom:8px">📦</div>
+        <div style="font-weight:600;font-size:13px;margin-bottom:4px">4. Entrega</div>
+        <div style="font-size:12px;color:var(--text-muted)">Confirmação de recebimento e fechamento</div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- Modal nova requisição -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2>Nova Requisição de Compra</h2>
+    <div class="form-group">
+      <label class="form-label">Item / Descrição</label>
+      <input class="input" id="f-item" placeholder="Ex: Papel A4 — 10 resmas">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Justificativa</label>
+      <input class="input" id="f-just" placeholder="Ex: Reposição de estoque">
+    </div>
+    <div class="grid-2" style="gap:14px">
+      <div class="form-group">
+        <label class="form-label">Valor estimado (R$)</label>
+        <input class="input" id="f-valor" type="number" placeholder="0,00">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Setor solicitante</label>
+        <input class="input" id="f-setor" placeholder="Ex: Administrativo">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarReq()">Enviar Requisição</button>
+    </div>
+  </div>
+</div>
+
+<footer class="ake-bar">
+  <span><span class="ake-dot-live"></span>AKE/UFT-1.0 online</span>
+  <span id="ake-info">–</span>
+  <span id="ake-ts">–</span>
+</footer>
+
+<script src="../core/treinamento-core.js"></script>
+<script>
+  TC.initPlatform('compras');
+  const user = TC.auth.requireModule('compras');
+  if (!user) throw new Error('acesso negado');
+
+  TC.renderTopbar('topbar-container');
+
+  const reqs = TC.data.getRequisicoes();
+  const aprovadas = reqs.filter(r => r.status === 'aprovado');
+  const totalAprov = aprovadas.reduce((s, r) => s + r.valor, 0);
+
+  document.getElementById('s-total').textContent    = reqs.length;
+  document.getElementById('s-pendentes').textContent = reqs.filter(r => r.status === 'pendente').length;
+  document.getElementById('s-aprovados').textContent = aprovadas.length;
+  document.getElementById('s-valor').textContent    = TC.utils.money(totalAprov);
+
+  const badgeCls = { aprovado: 'badge-green', pendente: 'badge-yellow', reprovado: 'badge-red' };
+  const badgeLbl = { aprovado: 'Aprovado',    pendente: 'Pendente',     reprovado: 'Reprovado' };
+
+  const tbody = document.getElementById('req-body');
+  reqs.forEach(r => {
+    const isPendente = r.status === 'pendente';
+    tbody.insertAdjacentHTML('beforeend', `
+      <tr>
+        <td style="font-family:monospace;font-size:12px">${r.id}</td>
+        <td>${r.item}</td>
+        <td>${r.solicitante}</td>
+        <td>${r.setor}</td>
+        <td>${TC.utils.money(r.valor)}</td>
+        <td>${TC.utils.date(r.data)}</td>
+        <td><span class="badge ${badgeCls[r.status]}">${badgeLbl[r.status]}</span></td>
+        <td style="display:flex;gap:6px">
+          ${isPendente ? `<button class="btn btn-success btn-sm" onclick="aprovar('${r.id}')">✓</button>
+          <button class="btn btn-danger btn-sm" onclick="reprovar('${r.id}')">✕</button>` :
+          `<button class="btn btn-ghost btn-sm" onclick="TC.toast.info('Ver detalhes — em desenvolvimento.')">Ver</button>`}
+        </td>
+      </tr>`);
+  });
+
+  function aprovar(id)  { TC.toast.success(`Requisição ${id} aprovada!`); }
+  function reprovar(id) { TC.toast.error(`Requisição ${id} reprovada.`); }
+  function openModal()  { document.getElementById('modal').classList.add('open'); }
+  function closeModal() { document.getElementById('modal').classList.remove('open'); }
+  function salvarReq() {
+    const item = document.getElementById('f-item').value.trim();
+    if (!item) { TC.toast.warn('Informe o item da requisição.'); return; }
+    TC.toast.success('Requisição enviada para aprovação!');
+    closeModal();
+  }
+  document.getElementById('modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal')) closeModal();
+  });
+</script>
+</body>
+</html>

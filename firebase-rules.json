@@ -106,6 +106,22 @@
         }
       },
 
+      /* ── PROGRESSO POR VÍDEO ─────────────────────────────────────
+         Mapeamento uid → tid → vid → ISO timestamp (vídeo assistido).
+         Leitura aberta para relatórios. Escrita por uid do path.
+      ──────────────────────────────────────────────────────────── */
+      "progresso": {
+        ".read": true,
+        "$uid": {
+          ".write": true,
+          "$tid": {
+            "$vid": {
+              ".validate": "newData.isString()"
+            }
+          }
+        }
+      },
+
       /* ── QUALQUER OUTRA CHAVE ────────────────────────────────────
          Bloqueia criação de nós fora da estrutura definida.
       ──────────────────────────────────────────────────────────── */

@@ -1,0 +1,22 @@
+# Sistema
+*.TMP
+~$*
+desktop.ini
+Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Editor
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# Dados sensíveis
+*.env
+.env.*
+secrets.*

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Executivo · Luís Albert Advocacia</title>
+  <link rel="stylesheet" href="../core/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* page-header herdado de style.css — teal LAADV */
+
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .kpi-card::after {
+      content: '';
+      position: absolute;
+      top: 0; right: 0;
+      width: 4px;
+      height: 100%;
+    }
+    .kpi-card.blue::after   { background: var(--accent); }
+    .kpi-card.green::after  { background: var(--success); }
+    .kpi-card.yellow::after { background: var(--warning); }
+    .kpi-card.purple::after { background: var(--purple); }
+
+    .kpi-label  { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .kpi-value  { font-size: 32px; font-weight: 700; line-height: 1; }
+    .kpi-delta  { font-size: 12px; margin-top: 8px; }
+    .delta-up   { color: var(--success); }
+    .delta-down { color: var(--danger); }
+
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+    .chart-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 18px;
+      color: var(--text);
+    }
+    canvas { max-height: 220px; }
+  </style>
+</head>
+<body>
+
+<div id="topbar-container"></div>
+
+<div class="sub-nav">
+  <div class="sub-nav-left">
+    <a href="/index.html" class="back-btn">← Portal</a>
+    <div class="sub-nav-sep"></div>
+    <span class="sub-nav-title">Dashboard Executivo</span>
+  </div>
+  <div>
+    <span class="text-small text-muted">Atualizado: <span id="update-ts">–</span></span>
+  </div>
+</div>
+
+<div class="page-header">
+  <div style="max-width:1100px;margin:0 auto">
+    <h1>📊 Dashboard Executivo</h1>
+    <p>KPIs, métricas e indicadores operacionais consolidados</p>
+  </div>
+</div>
+
+<main class="page-main pb-ake">
+
+  <!-- KPIs -->
+  <div class="grid-4 mb-3">
+    <div class="kpi-card teal">
+      <div class="kpi-label">Treinamentos concluídos</div>
+      <div class="kpi-value">48</div>
+      <div class="kpi-delta delta-up">▲ 12% vs. mês anterior</div>
+    </div>
+    <div class="kpi-card teal">
+      <div class="kpi-label">Colaboradores ativos</div>
+      <div class="kpi-value">124</div>
+      <div class="kpi-delta delta-up">▲ 3 admissões no mês</div>
+    </div>
+    <div class="kpi-card gold">
+      <div class="kpi-label">Compras aprovadas (R$)</div>
+      <div class="kpi-value">1.780</div>
+      <div class="kpi-delta delta-down">▼ 8% vs. mês anterior</div>
+    </div>
+    <div class="kpi-card gold">
+      <div class="kpi-label">Contratos vigentes</div>
+      <div class="kpi-value">31</div>
+      <div class="kpi-delta delta-up">▲ 2 novos contratos</div>
+    </div>
+  </div>
+
+  <!-- Gráficos linha 1 -->
+  <div class="grid-2 mb-3">
+    <div class="chart-card">
+      <div class="chart-title">Treinamentos concluídos por mês</div>
+      <canvas id="chart-treinos"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Requisições de compra por status</div>
+      <canvas id="chart-compras"></canvas>
+    </div>
+  </div>
+
+  <!-- Gráficos linha 2 -->
+  <div class="grid-2 mb-3">
+    <div class="chart-card">
+      <div class="chart-title">Colaboradores por setor</div>
+      <canvas id="chart-setores"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Evolução de contratos vigentes</div>
+      <canvas id="chart-contratos"></canvas>
+    </div>
+  </div>
+
+  <!-- Ranking de treinamentos -->
+  <div class="flex justify-between items-center mb-2">
+    <p class="section-label" style="margin-bottom:0">Ranking de conclusão de treinamentos</p>
+  </div>
+  <div class="card" style="overflow:hidden">
+    <table class="table">
+      <thead>
+        <tr><th>#</th><th>Curso</th><th>Setor</th><th>Concluídos</th><th>Total</th><th>Taxa</th></tr>
+      </thead>
+      <tbody id="ranking-body"></tbody>
+    </table>
+  </div>
+
+</main>
+
+<footer class="ake-bar">
+  <span><span class="ake-dot-live"></span>AKE/UFT-1.0 online</span>
+  <span id="ake-info">–</span>
+  <span id="ake-ts">–</span>
+</footer>
+
+<script src="../core/treinamento-core.js"></script>
+<script>
+  TC.initPlatform('dashboard');
+  const user = TC.auth.requireModule('dashboard');
+  if (!user) throw new Error('acesso negado');
+
+  TC.renderTopbar('topbar-container');
+  document.getElementById('update-ts').textContent = new Date().toLocaleString('pt-BR');
+
+  const MESES = ['Dez','Jan','Fev','Mar','Abr','Mai'];
+  const CHART_DEFAULTS = {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+      y: { grid: { color: '#F1F5F9' }, ticks: { font: { size: 11 } } },
+    },
+  };
+
+  // Treinamentos por mês
+  new Chart(document.getElementById('chart-treinos'), {
+    type: 'bar',
+    data: {
+      labels: MESES,
+      datasets: [{
+        data: [28, 31, 35, 40, 44, 48],
+        backgroundColor: '#EBF5F4',
+        borderColor: '#0B4A44',
+        borderWidth: 2,
+        borderRadius: 6,
+      }],
+    },
+    options: CHART_DEFAULTS,
+  });
+
+  // Compras por status
+  new Chart(document.getElementById('chart-compras'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Aprovado', 'Pendente', 'Reprovado'],
+      datasets: [{
+        data: [1, 2, 1],
+        backgroundColor: ['#EBF5F4', '#FAF3E0', '#FDECEA'],
+        borderColor:     ['#0B4A44', '#C9A93E', '#C0392B'],
+        borderWidth: 2,
+      }],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 12 } } },
+      },
+    },
+  });
+
+  // Colaboradores por setor
+  new Chart(document.getElementById('chart-setores'), {
+    type: 'bar',
+    data: {
+      labels: ['RH', 'Operações', 'Compras', 'Adm.'],
+      datasets: [{
+        data: [1, 2, 1, 1],
+        backgroundColor: ['#EBF5F4','#FAF3E0','#EBF5F4','#FAF3E0'],
+        borderColor:     ['#0B4A44','#C9A93E','#0B4A44','#C9A93E'],
+        borderWidth: 2,
+        borderRadius: 6,
+      }],
+    },
+    options: { ...CHART_DEFAULTS, plugins: { legend: { display: false } } },
+  });
+
+  // Contratos vigentes
+  new Chart(document.getElementById('chart-contratos'), {
+    type: 'line',
+    data: {
+      labels: MESES,
+      datasets: [{
+        data: [24, 25, 27, 27, 29, 31],
+        borderColor: '#C9A93E',
+        backgroundColor: 'rgba(201,169,62,0.08)',
+        tension: 0.4,
+        fill: true,
+        pointRadius: 4,
+        pointBackgroundColor: '#C9A93E',
+      }],
+    },
+    options: CHART_DEFAULTS,
+  });
+
+  // Ranking
+  const cursos = TC.data.getCursos();
+  const sorted = [...cursos].sort((a, b) => TC.utils.percent(b.concluidos, b.total) - TC.utils.percent(a.concluidos, a.total));
+  const tbody  = document.getElementById('ranking-body');
+  sorted.forEach((c, i) => {
+    const pct = TC.utils.percent(c.concluidos, c.total);
+    const cls = pct >= 80 ? 'badge-green' : pct >= 50 ? 'badge-yellow' : 'badge-red';
+    tbody.insertAdjacentHTML('beforeend', `
+      <tr>
+        <td style="font-weight:700;color:var(--text-muted)">#${i+1}</td>
+        <td>${c.titulo}</td>
+        <td>${c.setor}</td>
+        <td>${c.concluidos}</td>
+        <td>${c.total}</td>
+        <td><span class="badge ${cls}">${pct}%</span></td>
+      </tr>`);
+  });
+</script>
+</body>
+</html>

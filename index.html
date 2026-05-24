@@ -8,6 +8,8 @@
 <!-- Firebase Realtime Database -->
 <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <!-- Fontes LAADV -->
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
@@ -276,6 +278,25 @@ tbody tr:hover td{background:var(--teal-light)}
 .filter-bar input,.filter-bar select{padding:8px 12px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:13px;background:#fff;color:var(--text);outline:none;min-width:180px}
 .filter-bar input:focus,.filter-bar select:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(11,74,68,.1)}
 .char-count{font-size:11px;color:var(--muted);margin-top:4px;text-align:right}
+
+/* ── CONTENT ADMIN CARDS (TASK-09) ── */
+.ci-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-sm);margin-bottom:12px;overflow:hidden;transition:box-shadow .2s}
+.ci-card:hover{box-shadow:var(--sh-md)}
+.ci-header{display:flex;align-items:flex-start;gap:14px;padding:16px 20px;flex-wrap:wrap;cursor:default}
+.ci-info{flex:1;min-width:0}
+.ci-title{font-weight:600;font-size:15px;color:var(--text);margin-bottom:2px}
+.ci-desc{font-size:13px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ci-side{display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0}
+.ci-badges{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.ci-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.ci-videos{border-top:1px solid var(--border);padding:16px 20px;background:var(--teal-light)}
+.ci-vid-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px dashed var(--border)}
+.ci-vid-row:last-of-type{border-bottom:none}
+.ci-vid-num{width:24px;height:24px;border-radius:50%;background:var(--teal);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ci-vid-info{flex:1;min-width:0}
+.ci-vid-title{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ci-vid-dur{font-size:12px;color:var(--muted)}
+.ci-add-form{border-top:1px solid var(--border-dark);padding:14px 0 2px;margin-top:10px}
 </style>
 </head>
 <body>
@@ -617,6 +638,11 @@ function podeGerenciarUsuario(alvo_role){
   if(S.user.role === 'admin' && alvo_role === 'user') return true;
   return false;
 }
+function podeResetarSenha(alvo_role){
+  if(S.user.role === 'master') return true;
+  if(S.user.role === 'admin' && alvo_role === 'user') return true;
+  return false;
+}
 
 /* ── AUTH ──────────────────────────────────────────────────────── */
 async function doLogin(btn){
@@ -722,6 +748,7 @@ async function doSetup(btn){
 }
 
 async function doLogout(){
+  pararTimerSessao();
   await audit('LOGOUT', 'Saiu do portal');
   clearSession();
   S.user = null;
@@ -735,6 +762,67 @@ function toggleSenha(cb){
   document.getElementById('l-pass').type = cb.checked ? 'text' : 'password';
 }
 
+/* ── SESSÃO — TIMEOUT DE INATIVIDADE (TASK-17) ─────────────────── */
+const SESS_TIMEOUT_MS   = 30 * 60 * 1000;   // 30 min inatividade
+const SESS_WARN_MS      = 2  * 60 * 1000;   // 2 min para expirar
+let _sessTimer  = null;
+let _sessWarn   = null;
+let _sessWarnOn = false;
+
+function resetarTimerSessao(){
+  if(!S.user) return;
+  clearTimeout(_sessTimer);
+  clearTimeout(_sessWarn);
+  if(_sessWarnOn){ fecharAvisoSessao(); _sessWarnOn=false; }
+  _sessTimer = setTimeout(mostrarAvisoSessao, SESS_TIMEOUT_MS - SESS_WARN_MS);
+}
+
+function mostrarAvisoSessao(){
+  _sessWarnOn = true;
+  const overlay = document.createElement('div');
+  overlay.id = 'sess-warn';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;display:flex;align-items:center;justify-content:center';
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:var(--r-lg);border-top:4px solid var(--gold);padding:32px;max-width:420px;text-align:center;box-shadow:var(--sh-lg)">
+      <div style="font-size:40px;margin-bottom:12px">⏰</div>
+      <h2 style="font-family:'Cormorant Garamond',serif;color:var(--teal);font-size:22px;margin-bottom:10px">Sessão expirando</h2>
+      <p style="font-size:14px;color:var(--muted);margin-bottom:20px">Sua sessão expirará em <strong>2 minutos</strong> por inatividade. Deseja continuar?</p>
+      <div style="display:flex;gap:10px;justify-content:center">
+        <button class="btn btn-primary" onclick="continuarSessao()">Continuar sessão</button>
+        <button class="btn btn-ghost" onclick="doLogout()">Sair agora</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  _sessWarn = setTimeout(()=>{ if(_sessWarnOn) doLogout(); }, SESS_WARN_MS);
+}
+
+function fecharAvisoSessao(){
+  document.getElementById('sess-warn')?.remove();
+}
+
+window.continuarSessao = function(){
+  fecharAvisoSessao();
+  _sessWarnOn = false;
+  clearTimeout(_sessWarn);
+  resetarTimerSessao();
+};
+
+function iniciarTimerSessao(){
+  ['mousemove','keydown','click','touchstart'].forEach(ev=>
+    document.addEventListener(ev, resetarTimerSessao, {passive:true})
+  );
+  resetarTimerSessao();
+}
+
+function pararTimerSessao(){
+  clearTimeout(_sessTimer);
+  clearTimeout(_sessWarn);
+  fecharAvisoSessao();
+  ['mousemove','keydown','click','touchstart'].forEach(ev=>
+    document.removeEventListener(ev, resetarTimerSessao)
+  );
+}
+
 /* ── INICIAR APP ───────────────────────────────────────────────── */
 async function iniciarApp(){
   const u = S.user;
@@ -746,6 +834,7 @@ async function iniciarApp(){
   document.getElementById('ake-info').textContent   = `TC-LAADV-20250524 · ${u.role.toUpperCase()}`;
   document.getElementById('ake-ts').textContent     = new Date().toLocaleString('pt-BR');
   buildNav();
+  iniciarTimerSessao();
   await navTo('inicio');
 }
 
@@ -779,13 +868,29 @@ async function renderInicio(){
     <div class="page-body">`;
 
   if(u.role !== 'user'){
-    const [usuarios, treinamentos, logs] = await Promise.all([
-      dbRead('usuarios'), dbRead('treinamentos'), dbRead('logs')
+    const [usuarios, treinamentos, logs, conclusoes] = await Promise.all([
+      dbRead('usuarios'), dbRead('treinamentos'), dbRead('logs'), dbRead('conclusoes')
     ]);
     const nu = usuarios ? Object.values(usuarios).filter(x=>x.ativo).length : 0;
     const nt = treinamentos ? Object.values(treinamentos).filter(x=>x.ativo).length : 0;
     const nl = logs ? Object.keys(logs).length : 0;
     const na = usuarios ? Object.values(usuarios).filter(x=>x.role==='admin'||x.role==='master').length : 0;
+
+    // Dados para gráficos
+    const treinList   = treinamentos ? Object.entries(treinamentos) : [];
+    const concFlat    = conclusoes ? Object.values(conclusoes).flatMap(uid=>Object.keys(uid)) : [];
+    const concPorTrein = treinList.map(([tid,t])=>({
+      label: t.titulo.length>22?t.titulo.slice(0,20)+'…':t.titulo,
+      count: concFlat.filter(x=>x===tid).length
+    }));
+
+    const setores = {};
+    if(usuarios) Object.values(usuarios).forEach(u=>{ if(u.setor&&u.ativo){ setores[u.setor]=(setores[u.setor]||0)+1; } });
+
+    // Conclusões por dia (últimos 7 dias)
+    const dias7 = Array.from({length:7},(_,i)=>{ const d=new Date(); d.setDate(d.getDate()-6+i); return d.toISOString().slice(0,10); });
+    const concLogs = logs ? Object.values(logs).filter(l=>l.acao==='CONCLUIR_TREINAMENTO') : [];
+    const concPorDia = dias7.map(d=>concLogs.filter(l=>l.ts&&l.ts.startsWith(d)).length);
 
     html += `<div class="grid-4 mb-3">
       <div class="stat-card"><div class="stat-icon" style="background:var(--teal-light)">👥</div>
@@ -796,6 +901,20 @@ async function renderInicio(){
         <div><div class="stat-val">${na}</div><div class="stat-lbl">Administradores</div></div></div>
       <div class="stat-card"><div class="stat-icon" style="background:var(--teal-light)">📋</div>
         <div><div class="stat-val">${nl}</div><div class="stat-lbl">Registros de log</div></div></div>
+    </div>
+    <div class="grid-3 mb-3">
+      <div class="card card-pad" style="grid-column:span 2">
+        <p class="section-label" style="margin-bottom:12px">Conclusões por treinamento</p>
+        <canvas id="chart-bar" height="120"></canvas>
+      </div>
+      <div class="card card-pad">
+        <p class="section-label" style="margin-bottom:12px">Usuários por setor</p>
+        <canvas id="chart-doughnut" height="120"></canvas>
+      </div>
+    </div>
+    <div class="card card-pad mb-3">
+      <p class="section-label" style="margin-bottom:12px">Conclusões nos últimos 7 dias</p>
+      <canvas id="chart-line" height="60"></canvas>
     </div>`;
 
     // Últimos logs
@@ -806,19 +925,63 @@ async function renderInicio(){
           <thead><tr><th>Quando</th><th>Usuário</th><th>Ação</th><th>Detalhes</th></tr></thead><tbody>
           ${ultimos.map(l=>`<tr>
             <td class="text-sm text-muted">${fmtTs(l.ts)}</td>
-            <td>${l.ator_nome} <span class="badge ${ROLE_BADGE[l.ator_role]||'badge-gray'} text-sm">${ROLE_LABEL[l.ator_role]||l.ator_role}</span></td>
+            <td>${esc(l.ator_nome)} <span class="badge ${ROLE_BADGE[l.ator_role]||'badge-gray'} text-sm">${ROLE_LABEL[l.ator_role]||l.ator_role}</span></td>
             <td>${fmtAcao(l.acao)}</td>
-            <td class="text-sm text-muted">${l.detalhes||'–'}</td>
+            <td class="text-sm text-muted">${esc(l.detalhes||'–')}</td>
           </tr>`).join('')}
           </tbody></table></div></div>`;
     } else {
       html += `<div class="empty-state"><div class="empty-icon">📋</div><h3>Nenhum registro ainda</h3><p>As atividades aparecerão aqui.</p></div>`;
     }
+
+    html += `</div>`;
+    document.getElementById('content').innerHTML = html;
+
+    // Renderiza gráficos após o DOM estar pronto
+    requestAnimationFrame(()=>{
+      const tealColor = '#0B4A44';
+      const goldColor = '#C9A93E';
+      const bgTeal    = '#EBF5F4';
+
+      const elBar = document.getElementById('chart-bar');
+      if(elBar && concPorTrein.length){
+        new Chart(elBar,{ type:'bar', data:{
+          labels: concPorTrein.map(x=>x.label),
+          datasets:[{ label:'Conclusões', data:concPorTrein.map(x=>x.count), backgroundColor:tealColor, borderRadius:4 }]
+        }, options:{ plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}, responsive:true, maintainAspectRatio:true }});
+      }
+
+      const elDonut = document.getElementById('chart-doughnut');
+      const setorLabels = Object.keys(setores);
+      if(elDonut && setorLabels.length){
+        const palette = [tealColor,'#145E58','#1F7A72',goldColor,'#B8951E','#D4B84E','#8A9BAB'];
+        new Chart(elDonut,{ type:'doughnut', data:{
+          labels: setorLabels,
+          datasets:[{ data:setorLabels.map(s=>setores[s]), backgroundColor:palette, borderWidth:2, borderColor:'#fff' }]
+        }, options:{ plugins:{legend:{position:'bottom',labels:{font:{size:11}}}}, responsive:true, maintainAspectRatio:true }});
+      } else if(elDonut){
+        elDonut.parentElement.innerHTML += `<p class="text-sm text-muted" style="text-align:center;margin-top:8px">Nenhum usuário com setor cadastrado.</p>`;
+      }
+
+      const elLine = document.getElementById('chart-line');
+      if(elLine){
+        new Chart(elLine,{ type:'line', data:{
+          labels: dias7.map(d=>new Date(d+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})),
+          datasets:[{ label:'Conclusões', data:concPorDia, borderColor:goldColor, backgroundColor:bgTeal, fill:true, tension:.35, pointBackgroundColor:goldColor, pointRadius:4 }]
+        }, options:{ plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}, responsive:true, maintainAspectRatio:true }});
+      }
+    });
+    return;
   } else {
     // User dashboard — progresso
-    const [treins, concs] = await Promise.all([dbRead('treinamentos'), dbRead(`conclusoes/${u.uid}`)]);
-    const todos   = treins  ? Object.entries(treins).filter(([,t])=>t.ativo) : [];
+    const [treins, concs, prog] = await Promise.all([
+      dbRead('treinamentos'),
+      dbRead(`conclusoes/${u.uid}`),
+      dbRead(`progresso/${u.uid}`)
+    ]);
+    const todos   = treins  ? Object.entries(treins).filter(([,t])=>t.ativo).sort((a,b)=>(a[1].ordem||0)-(b[1].ordem||0)) : [];
     const concMap = concs || {};
+    const progAll = prog  || {};
     const done    = todos.filter(([id])=>concMap[id]).length;
     const pct     = todos.length ? Math.round((done/todos.length)*100) : 0;
 
@@ -832,15 +995,18 @@ async function renderInicio(){
     <p class="section-label">Treinamentos disponíveis</p>
     <div class="grid-3">
       ${todos.map(([tid,t])=>{
-        const feito = !!concMap[tid];
-        const nvids = t.videos ? Object.keys(t.videos).length : 0;
+        const feito  = !!concMap[tid];
+        const nvids  = t.videos ? Object.keys(t.videos).length : 0;
+        const assist = progAll[tid] ? Object.keys(progAll[tid]).length : 0;
+        const vpct   = feito ? 100 : (nvids ? Math.round((assist/nvids)*100) : 0);
+        const label  = feito ? `<span class="badge badge-green">✓ Concluído</span>`
+                      : vpct ? `<span class="badge badge-teal">${vpct}%</span>`
+                             : `<span class="badge badge-gray">Não iniciado</span>`;
         return `<div class="training-card" onclick="navTo('treinos');setTimeout(()=>verTreinamento('${tid}'),200)">
-          <div class="tc-header"><h3>${t.titulo}</h3><p>${t.descricao||''}</p></div>
+          <div class="tc-header"><h3>${esc(t.titulo)}</h3><p>${esc(t.descricao||'')}</p></div>
           <div class="tc-body">
-            <div class="tc-meta"><span>📹 ${nvids} vídeo${nvids!==1?'s':''}</span>
-              ${feito?`<span class="badge badge-green">✓ Concluído</span>`:`<span class="badge badge-gray">Pendente</span>`}
-            </div>
-            <div class="tc-progress"><div class="tc-fill" style="width:${feito?100:0}%"></div></div>
+            <div class="tc-meta"><span>📹 ${nvids} vídeo${nvids!==1?'s':''}</span>${label}</div>
+            <div class="tc-progress"><div class="tc-fill" style="width:${vpct}%"></div></div>
           </div>
         </div>`;
       }).join('')||`<div class="empty-state"><div class="empty-icon">🎓</div><h3>Nenhum treinamento disponível</h3><p>Fique atento a novos conteúdos.</p></div>`}
@@ -856,9 +1022,15 @@ async function renderInicio(){
    ═══════════════════════════════════════════════════════════════ */
 async function renderTreinos(){
   if(S.subView){ await renderTreinamentoDetalhe(S.subView); return; }
-  const [treins, concs] = await Promise.all([dbRead('treinamentos'), dbRead(`conclusoes/${S.user.uid}`)]);
-  const todos   = treins ? Object.entries(treins).filter(([,t])=>t.ativo) : [];
+  const uid = S.user.uid;
+  const [treins, concs, prog] = await Promise.all([
+    dbRead('treinamentos'),
+    dbRead(`conclusoes/${uid}`),
+    dbRead(`progresso/${uid}`)
+  ]);
+  const todos   = treins ? Object.entries(treins).filter(([,t])=>t.ativo).sort((a,b)=>(a[1].ordem||0)-(b[1].ordem||0)) : [];
   const concMap = concs || {};
+  const progAll = prog  || {};
 
   let html = `<div class="page-header"><h1>🎓 Treinamentos</h1><p>Acesse os conteúdos disponíveis para você.</p></div>
     <div class="page-body">`;
@@ -867,15 +1039,18 @@ async function renderTreinos(){
     html += `<div class="empty-state"><div class="empty-icon">🎓</div><h3>Nenhum treinamento disponível</h3><p>O administrador adicionará conteúdos em breve.</p></div>`;
   } else {
     html += `<div class="grid-2">` + todos.map(([tid,t])=>{
-      const feito = !!concMap[tid];
-      const nvids = t.videos ? Object.keys(t.videos).length : 0;
+      const feito  = !!concMap[tid];
+      const nvids  = t.videos ? Object.keys(t.videos).length : 0;
+      const assist = progAll[tid] ? Object.keys(progAll[tid]).length : 0;
+      const pct    = feito ? 100 : (nvids ? Math.round((assist/nvids)*100) : 0);
+      const label  = feito ? `<span class="badge badge-green">✓ Concluído</span>`
+                    : pct  ? `<span class="badge badge-teal">${pct}% assistido</span>`
+                           : `<span class="badge badge-gray">Não iniciado</span>`;
       return `<div class="training-card" onclick="verTreinamento('${tid}')">
-        <div class="tc-header"><h3>${t.titulo}</h3><p>${t.descricao||''}</p></div>
+        <div class="tc-header"><h3>${esc(t.titulo)}</h3><p>${esc(t.descricao||'')}</p></div>
         <div class="tc-body">
-          <div class="tc-meta"><span>📹 ${nvids} vídeo${nvids!==1?'s':''}</span>
-            ${feito?`<span class="badge badge-green">✓ Concluído</span>`:`<span class="badge badge-gray">Em andamento</span>`}
-          </div>
-          <div class="tc-progress"><div class="tc-fill" style="width:${feito?100:0}%"></div></div>
+          <div class="tc-meta"><span>📹 ${nvids} vídeo${nvids!==1?'s':''}</span>${label}</div>
+          <div class="tc-progress"><div class="tc-fill" style="width:${pct}%"></div></div>
         </div>
       </div>`;
     }).join('') + `</div>`;
@@ -891,17 +1066,36 @@ async function verTreinamento(tid){
 }
 
 async function renderTreinamentoDetalhe(tid){
-  const [t, concs] = await Promise.all([dbRead(`treinamentos/${tid}`), dbRead(`conclusoes/${S.user.uid}`)]);
+  const uid = S.user.uid;
+  const [t, concs, prog] = await Promise.all([
+    dbRead(`treinamentos/${tid}`),
+    dbRead(`conclusoes/${uid}`),
+    dbRead(`progresso/${uid}/${tid}`)
+  ]);
   if(!t){ toast('Treinamento não encontrado.','err'); await navTo('treinos'); return; }
-  const concMap = concs || {};
-  const feito   = !!concMap[tid];
-  const videos  = t.videos ? Object.entries(t.videos) : [];
-  const vidAtual = videos.length ? videos[0] : null;
+  const concMap   = concs || {};
+  const feito     = !!concMap[tid];
+  const progMap   = prog  || {};
+  const videos    = t.videos ? Object.entries(t.videos) : [];
+  const total     = videos.length;
+  const assistidos = Object.keys(progMap).length;
+  const pct       = total ? Math.round((assistidos/total)*100) : 0;
+  const vidAtual  = videos.length ? videos[0] : null;
+  const vidAtualId = vidAtual ? vidAtual[0] : null;
+
+  window._treinsVideos   = Object.fromEntries(videos);
+  window._vidProgresso   = progMap;
+  window._treinAtualTid  = tid;
+  window._treinAtualVid  = vidAtualId;
+
+  const buildAssistidoBtn = (vid) => progMap[vid]
+    ? `<span class="badge badge-green" style="padding:8px 14px">✓ Assistido</span>`
+    : `<button class="btn btn-primary btn-sm" id="btn-assistido" onclick="marcarVideoAssistido('${tid}','${vid}')">✓ Marcar como assistido</button>`;
 
   let html = `<div class="page-header">
     <div class="flex items-center gap-md">
       <button class="btn btn-ghost btn-sm" onclick="S.subView=null;renderTreinos()" style="background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff">← Voltar</button>
-      <div><h1>${t.titulo}</h1><p>${t.descricao||''}</p></div>
+      <div><h1>${esc(t.titulo)}</h1><p>${esc(t.descricao||'')}</p></div>
     </div>
   </div>
   <div class="page-body" id="detalhe-body">
@@ -910,49 +1104,146 @@ async function renderTreinamentoDetalhe(tid){
         <div id="player-box">
           ${vidAtual ? ytEmbed(vidAtual[1].url, vidAtual[1].titulo) : '<p class="text-muted">Nenhum vídeo neste treinamento.</p>'}
         </div>
-        <div id="video-title" style="font-size:15px;font-weight:600;margin:10px 0 4px">${vidAtual?vidAtual[1].titulo:''}</div>
-        <div id="video-dur" class="text-sm text-muted">${vidAtual&&vidAtual[1].duracao?'⏱ '+vidAtual[1].duracao:''}</div>
+        <div id="video-title" style="font-size:15px;font-weight:600;margin:10px 0 4px">${vidAtual?esc(vidAtual[1].titulo):''}</div>
+        <div id="video-dur" class="text-sm text-muted">${vidAtual&&vidAtual[1].duracao?'⏱ '+esc(vidAtual[1].duracao):''}</div>
+        <div id="assistido-action" style="margin-top:12px">
+          ${vidAtualId ? buildAssistidoBtn(vidAtualId) : ''}
+        </div>
       </div>
-      <div style="width:280px;flex-shrink:0">
+      <div style="width:290px;flex-shrink:0">
+        ${total ? `
+        <div style="margin-bottom:14px">
+          <div class="flex justify-between items-center" style="margin-bottom:4px">
+            <span class="section-label" style="margin:0">Progresso</span>
+            <span class="text-sm text-muted">${assistidos}/${total} vídeos</span>
+          </div>
+          <div class="prog-bar" style="height:8px"><div class="prog-fill" style="width:${feito?100:pct}%"></div></div>
+          <p class="text-sm text-muted" style="margin-top:4px">${feito?100:pct}% concluído</p>
+        </div>` : ''}
         <p class="section-label">Vídeos do treinamento</p>
         <div class="video-list">
           ${videos.map(([vid,v],i)=>`
-            <div class="video-item${i===0?' active':''}" id="vi-${vid}" onclick="selecionarVideo('${tid}','${vid}',${i})">
-              <div class="vi-num">${i+1}</div>
+            <div class="video-item${i===0?' active':''}${progMap[vid]?' done':''}" id="vi-${vid}" onclick="selecionarVideo('${tid}','${vid}',${i})">
+              <div class="vi-num">${progMap[vid]?'✓':(i+1)}</div>
               <div class="vi-info">
-                <div class="vi-title">${v.titulo}</div>
-                ${v.duracao?`<div class="vi-dur">⏱ ${v.duracao}</div>`:''}
+                <div class="vi-title">${esc(v.titulo)}</div>
+                ${v.duracao?`<div class="vi-dur">⏱ ${esc(v.duracao)}</div>`:''}
               </div>
             </div>`).join('')||'<p class="text-sm text-muted">Nenhum vídeo cadastrado.</p>'}
         </div>
-        ${!feito && videos.length ? `
-          <button class="btn btn-success btn-full" onclick="marcarConcluido('${tid}')">
-            ✓ Marcar treinamento como concluído
-          </button>` : feito ? `<div class="badge badge-green" style="width:100%;justify-content:center;padding:10px">✓ Treinamento concluído!</div>` : ''}
+        ${feito
+          ? `<div class="badge badge-green" style="width:100%;justify-content:center;padding:10px;margin-top:12px">✓ Treinamento concluído!</div>
+             <button class="btn btn-gold btn-full mt-2" onclick="gerarCertificado('${uid}','${tid}')">🏆 Baixar Certificado</button>`
+          : ''}
       </div>
     </div>
   </div>`;
 
   document.getElementById('content').innerHTML = html;
-  window._treinsVideos = Object.fromEntries(videos);
 }
 
 async function selecionarVideo(tid, vid, idx){
   const v = window._treinsVideos?.[vid];
   if(!v) return;
-  document.getElementById('player-box').innerHTML   = ytEmbed(v.url, v.titulo);
-  document.getElementById('video-title').textContent = v.titulo;
-  document.getElementById('video-dur').textContent   = v.duracao ? '⏱ ' + v.duracao : '';
+  document.getElementById('player-box').innerHTML    = ytEmbed(v.url, v.titulo);
+  document.getElementById('video-title').textContent  = v.titulo;
+  document.getElementById('video-dur').textContent    = v.duracao ? '⏱ ' + v.duracao : '';
   document.querySelectorAll('.video-item').forEach(el=>el.classList.remove('active'));
   document.getElementById(`vi-${vid}`)?.classList.add('active');
+  window._treinAtualVid = vid;
+  const progMap = window._vidProgresso || {};
+  const btnArea = document.getElementById('assistido-action');
+  if(btnArea){
+    btnArea.innerHTML = progMap[vid]
+      ? `<span class="badge badge-green" style="padding:8px 14px">✓ Assistido</span>`
+      : `<button class="btn btn-primary btn-sm" id="btn-assistido" onclick="marcarVideoAssistido('${tid}','${vid}')">✓ Marcar como assistido</button>`;
+  }
 }
+
+window.marcarVideoAssistido = async function(tid, vid){
+  const uid = S.user.uid;
+  await dbSet(`progresso/${uid}/${tid}/${vid}`, new Date().toISOString());
+  await audit('MARCAR_VIDEO_ASSISTIDO', `Vídeo ${vid} do treinamento ${tid}`);
+  if(!window._vidProgresso) window._vidProgresso = {};
+  window._vidProgresso[vid] = new Date().toISOString();
+
+  // atualiza UI do botão sem re-renderizar tudo
+  const btnArea = document.getElementById('assistido-action');
+  if(btnArea) btnArea.innerHTML = `<span class="badge badge-green" style="padding:8px 14px">✓ Assistido</span>`;
+  const viEl = document.getElementById(`vi-${vid}`);
+  if(viEl){ viEl.classList.add('done'); viEl.querySelector('.vi-num').textContent='✓'; }
+
+  // verifica conclusão automática
+  const total = window._treinsVideos ? Object.keys(window._treinsVideos).length : 0;
+  const assistidos = Object.keys(window._vidProgresso).length;
+  if(total>0 && assistidos>=total){
+    const jaFeito = await dbRead(`conclusoes/${uid}/${tid}`);
+    if(!jaFeito) await marcarConcluido(tid);
+  } else {
+    toast('Vídeo marcado como assistido!','ok');
+  }
+};
 
 async function marcarConcluido(tid){
   await dbSet(`conclusoes/${S.user.uid}/${tid}`, new Date().toISOString());
   await audit('CONCLUIR_TREINAMENTO', `Concluiu: ${tid}`);
-  toast('Parabéns! Treinamento marcado como concluído. 🎉','ok');
+  toast('Parabéns! Treinamento concluído! 🎉','ok');
   await renderTreinamentoDetalhe(tid);
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   CERTIFICADO DE CONCLUSÃO (TASK-11)
+   ═══════════════════════════════════════════════════════════════ */
+window.gerarCertificado = async function(uid, tid){
+  const [t, u, concs] = await Promise.all([
+    dbRead(`treinamentos/${tid}`),
+    dbRead(`usuarios/${uid}`),
+    dbRead(`conclusoes/${uid}`)
+  ]);
+  if(!t||!u){ toast('Dados não encontrados.','err'); return; }
+  const dataConclusao = concs?.[tid] ? new Date(concs[tid]).toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'}) : new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+  const hoje = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+
+  const w = window.open('','_blank','width=900,height=650');
+  w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+  <title>Certificado — ${u.nome}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:#fff;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:30px}
+    .cert{width:800px;min-height:560px;border:8px solid #C9A93E;border-radius:8px;padding:50px 60px;text-align:center;position:relative;box-shadow:0 0 0 3px #0B4A44,0 0 0 6px #C9A93E}
+    .cert::before{content:'';position:absolute;inset:12px;border:1.5px dashed rgba(201,169,62,.4);border-radius:4px;pointer-events:none}
+    .logo{font-family:'Cormorant Garamond',serif;font-size:52px;font-weight:700;color:#0B4A44;letter-spacing:2px;margin-bottom:4px}
+    .org{font-size:12px;color:#5A6A7A;letter-spacing:3px;text-transform:uppercase;margin-bottom:32px}
+    .cert-label{font-size:11px;color:#5A6A7A;text-transform:uppercase;letter-spacing:2.5px;margin-bottom:10px}
+    .cert-name{font-family:'Cormorant Garamond',serif;font-size:40px;font-weight:700;color:#0B4A44;margin-bottom:16px;border-bottom:2px solid #C9A93E;padding-bottom:12px;display:inline-block}
+    .cert-text{font-size:15px;color:#162030;line-height:1.8;margin:20px 0}
+    .cert-course{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;color:#0B4A44;margin:4px 0 20px}
+    .cert-date{font-size:14px;color:#5A6A7A;margin-bottom:32px}
+    .cert-sign{margin-top:36px;padding-top:16px;border-top:1px solid #DDE3EC}
+    .cert-sign p{font-size:13px;color:#5A6A7A}
+    .cert-sign strong{font-size:14px;color:#162030}
+    .cert-footer{position:absolute;bottom:18px;left:0;right:0;font-size:10px;color:#8A9BAB;letter-spacing:.5px}
+    @media print{body{padding:0}.cert{box-shadow:none;width:100%}button{display:none}}
+  </style></head><body>
+  <div class="cert">
+    <div class="logo">LA</div>
+    <div class="org">Luís Albert Advocacia</div>
+    <div class="cert-label">Certificamos que</div>
+    <div><span class="cert-name">${u.nome}</span></div>
+    <p class="cert-text">concluiu com êxito o treinamento</p>
+    <div class="cert-course">${t.titulo}</div>
+    <div class="cert-date">concluído em ${dataConclusao}</div>
+    <div class="cert-sign">
+      <strong>Luís Albert Advocacia — Portal de Treinamentos</strong>
+      <p>${u.setor||''}</p>
+    </div>
+    <div class="cert-footer">Documento gerado em ${hoje} · AKE/UFT-1.0 · Portal de Treinamentos LAADV</div>
+  </div>
+  <script>window.onload=()=>window.print();<\/script>
+  </body></html>`);
+  w.document.close();
+};
 
 /* ═══════════════════════════════════════════════════════════════
    PAINEL: MEU PERFIL
@@ -1073,6 +1364,7 @@ async function renderUsuarios(){
           ${pode&&!isSelf ? `<button class="btn btn-ghost btn-sm" onclick="abrirFormUsuario('${uid}')">Editar</button>` : ''}
           ${pode&&!isSelf&&u.ativo ? `<button class="btn btn-ghost btn-sm" onclick="confirmarDesativar('${uid}','${esc(u.nome)}')">Desativar</button>` : ''}
           ${pode&&!isSelf&&!u.ativo ? `<button class="btn btn-success btn-sm" onclick="toggleAtivo('${uid}',true)">Ativar</button>` : ''}
+          ${podeResetarSenha(u.role)&&!isSelf ? `<button class="btn btn-ghost btn-sm" onclick="resetarSenha('${uid}')">🔑 Resetar Senha</button>` : ''}
           ${S.user.role==='master'&&!isSelf ? `<button class="btn btn-danger btn-sm" onclick="deletarUsuario('${uid}','${esc(u.nome)}')">Excluir</button>` : ''}
           ${isSelf ? `<span class="text-sm text-muted">Você</span>` : ''}
         </div>
@@ -1224,23 +1516,58 @@ async function confirmarResetSenha(uid){
 /* ═══════════════════════════════════════════════════════════════
    PAINEL: CONTEÚDO / TREINAMENTOS ADMIN
    ═══════════════════════════════════════════════════════════════ */
+window._expandidos = window._expandidos || new Set();
+
 async function renderConteudo(){
   const data = await dbRead('treinamentos');
   const lista = data ? Object.entries(data).sort((a,b)=>(a[1].ordem||0)-(b[1].ordem||0)) : [];
 
-  let rows = lista.map(([tid,t])=>{
-    const nvids = t.videos ? Object.keys(t.videos).length : 0;
-    return `<tr>
-      <td><div style="font-weight:500">${esc(t.titulo)}</div><div class="text-sm text-muted">${esc(t.descricao||'')}</div></td>
-      <td>${nvids} vídeo${nvids!==1?'s':''}</td>
-      <td><span class="badge ${t.ativo?'badge-green':'badge-red'}">${t.ativo?'Ativo':'Inativo'}</span></td>
-      <td><div class="td-actions">
-        <button class="btn btn-ghost btn-sm" onclick="abrirFormTrein('${tid}')">Editar</button>
-        <button class="btn btn-ghost btn-sm" onclick="abrirGerenciarVideos('${tid}')">📹 Vídeos</button>
-        <button class="btn btn-ghost btn-sm" onclick="toggleAtivoTrein('${tid}',${!t.ativo})">${t.ativo?'Desativar':'Ativar'}</button>
-        ${S.user.role==='master'?`<button class="btn btn-danger btn-sm" onclick="deletarTrein('${tid}','${esc(t.titulo)}')">Excluir</button>`:''}
-      </div></td>
-    </tr>`;
+  const cards = lista.map(([tid,t])=>{
+    const videos = t.videos ? Object.entries(t.videos) : [];
+    const nvids = videos.length;
+    const expandido = window._expandidos.has(tid);
+
+    const vidsHtml = videos.map(([vid,v],i)=>`
+      <div class="ci-vid-row">
+        <div class="ci-vid-num">${i+1}</div>
+        <div class="ci-vid-info">
+          <div class="ci-vid-title">${esc(v.titulo)}</div>
+          ${v.duracao?`<div class="ci-vid-dur">⏱ ${esc(v.duracao)}</div>`:''}
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="excluirVideoInline('${tid}','${vid}','${esc(t.titulo)}')">✕</button>
+      </div>`).join('') || `<p class="text-sm text-muted" style="padding:8px 0">Nenhum vídeo ainda.</p>`;
+
+    const addForm = `
+      <div class="ci-add-form">
+        <p class="section-label">Adicionar vídeo</p>
+        <div id="vf-alert-${tid}"></div>
+        <div class="field"><label>Título</label><input type="text" id="vf-titulo-${tid}" placeholder="Ex: Aula 1 — Introdução"></div>
+        <div class="field"><label>Link do YouTube</label><input type="text" id="vf-url-${tid}" placeholder="https://youtube.com/watch?v=…"></div>
+        <div class="field"><label>Duração (opcional)</label><input type="text" id="vf-dur-${tid}" placeholder="Ex: 15 min"></div>
+        <button class="btn btn-primary btn-sm mt-1" onclick="adicionarVideoConteudo('${tid}',this)">+ Salvar Vídeo</button>
+      </div>`;
+
+    return `
+      <div class="ci-card" id="ci-${tid}">
+        <div class="ci-header">
+          <div class="ci-info">
+            <div class="ci-title">${esc(t.titulo)}</div>
+            ${t.descricao?`<div class="ci-desc">${esc(t.descricao)}</div>`:''}
+          </div>
+          <div class="ci-side">
+            <div class="ci-badges">
+              <span class="badge ${t.ativo?'badge-green':'badge-red'}">${t.ativo?'Ativo':'Inativo'}</span>
+              <span class="badge badge-teal">${nvids} vídeo${nvids!==1?'s':''}</span>
+            </div>
+            <div class="ci-actions">
+              <button class="btn btn-ghost btn-sm" onclick="expandirTrein('${tid}')">${expandido?'▲ Recolher':'▼ Expandir'}</button>
+              <button class="btn btn-ghost btn-sm" onclick="abrirFormTrein('${tid}')">✏ Editar</button>
+              ${S.user.role==='master'?`<button class="btn btn-danger btn-sm" onclick="deletarTreinComCheck('${tid}','${esc(t.titulo)}')">Excluir</button>`:''}
+            </div>
+          </div>
+        </div>
+        ${expandido ? `<div class="ci-videos" id="ci-vids-${tid}">${vidsHtml}${addForm}</div>` : ''}
+      </div>`;
   }).join('');
 
   document.getElementById('content').innerHTML = `
@@ -1251,16 +1578,77 @@ async function renderConteudo(){
       </div>
     </div>
     <div class="page-body">
-      ${!lista.length ? `<div class="empty-state"><div class="empty-icon">📚</div><h3>Nenhum treinamento cadastrado</h3><p>Clique em "+ Novo Treinamento" para começar.</p></div>` : `
-      <div class="card"><div class="tbl-wrap"><table>
-        <thead><tr><th>Treinamento</th><th>Vídeos</th><th>Status</th><th>Ações</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table></div></div>`}
+      ${!lista.length
+        ? `<div class="empty-state"><div class="empty-icon">📚</div><h3>Nenhum treinamento cadastrado</h3><p>Clique em "+ Novo Treinamento" para começar.</p></div>`
+        : cards}
     </div>`;
 }
 
+window.expandirTrein = function(tid){
+  if(window._expandidos.has(tid)) window._expandidos.delete(tid);
+  else window._expandidos.add(tid);
+  renderConteudo();
+};
+
+window.excluirVideoInline = function(tid, vid, tituloTrein){
+  confirmar(`Remover este vídeo do treinamento <strong>${tituloTrein}</strong>?`,
+    async function(){
+      await dbRemove(`treinamentos/${tid}/videos/${vid}`);
+      await audit('REMOVER_VIDEO', `Removeu vídeo ${vid} do treinamento ${tid}`);
+      toast('Vídeo removido.','ok');
+      await renderConteudo();
+    }
+  );
+};
+
+window.adicionarVideoConteudo = async function(tid, btn){
+  const titulo = document.getElementById(`vf-titulo-${tid}`).value.trim();
+  const url    = document.getElementById(`vf-url-${tid}`).value.trim();
+  const dur    = document.getElementById(`vf-dur-${tid}`).value.trim();
+  const alrt   = document.getElementById(`vf-alert-${tid}`);
+  if(!titulo||!url){ alrt.innerHTML=`<div class="alert alert-err">Preencha título e link do vídeo.</div>`; return; }
+  if(!extrairYtId(url) && !url.startsWith('http')){ alrt.innerHTML=`<div class="alert alert-err">Link inválido. Use um link do YouTube ou URL de vídeo.</div>`; return; }
+  setBtnLoading(btn, true);
+  try {
+    await dbPush(`treinamentos/${tid}/videos`, { titulo, url, duracao:dur, criado_em:new Date().toISOString() });
+    await audit('ADICIONAR_VIDEO', `Adicionou vídeo "${titulo}" ao treinamento ${tid}`);
+    toast('Vídeo adicionado!','ok');
+    await renderConteudo();
+  } catch(e){
+    if(alrt) alrt.innerHTML=`<div class="alert alert-err">Erro: ${e.message}</div>`;
+  } finally {
+    setBtnLoading(btn, false);
+  }
+};
+
+window.deletarTreinComCheck = function(tid, titulo){
+  confirmar(`Excluir o treinamento <strong>${titulo}</strong>? Esta ação é irreversível.`,
+    async function(){
+      const conclusoes = await dbRead('conclusoes');
+      if(conclusoes){
+        const temConclusao = Object.values(conclusoes).some(u => u[tid]);
+        if(temConclusao){
+          toast('Não é possível excluir: existem registros de conclusão vinculados a este treinamento.','err');
+          return;
+        }
+      }
+      await dbRemove(`treinamentos/${tid}`);
+      window._expandidos.delete(tid);
+      await audit('DELETAR_TREINAMENTO', `Excluiu: "${titulo}"`);
+      toast('Treinamento excluído.','ok');
+      await renderConteudo();
+    }
+  );
+};
+
 function abrirFormTrein(tid=null){
   dbRead(tid?`treinamentos/${tid}`:null).then(t=>{
+    const ativoCheck = tid
+      ? `<div class="field"><label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+           <input type="checkbox" id="tf-ativo" ${t?.ativo!==false?'checked':''} style="width:16px;height:16px;accent-color:var(--teal)">
+           <span>Treinamento ativo (visível para usuários)</span>
+         </label></div>`
+      : '';
     abrirModal(tid?'Editar Treinamento':'Novo Treinamento',
       `<div id="tf-alert"></div>
        <div class="field"><label>Título do treinamento</label>
@@ -1269,7 +1657,8 @@ function abrirFormTrein(tid=null){
          <textarea id="tf-desc" rows="3" maxlength="300" placeholder="Descreva o objetivo deste treinamento…" oninput="contarChars(this,'tf-desc-count')">${esc(t?.descricao||'')}</textarea>
          <div class="char-count" id="tf-desc-count">${(t?.descricao||'').length}/300 caracteres</div></div>
        <div class="field"><label>Ordem de exibição</label>
-         <input type="number" id="tf-ordem" value="${t?.ordem||1}" min="1" style="width:80px"></div>`,
+         <input type="number" id="tf-ordem" value="${t?.ordem||1}" min="1" style="width:80px"></div>
+       ${ativoCheck}`,
       `<button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
        <button class="btn btn-primary" onclick="salvarTrein(${tid?`'${tid}'`:'null'},this)">${tid?'Salvar':'Criar'}</button>`
     );
@@ -1285,8 +1674,10 @@ async function salvarTrein(tid=null, btn=null){
   setBtnLoading(btn, true);
   try {
     if(tid){
-      await dbUpdate(`treinamentos/${tid}`, { titulo, descricao:desc, ordem });
-      await audit('EDITAR_TREINAMENTO', `Editou: "${titulo}"`);
+      const ativoEl = document.getElementById('tf-ativo');
+      const ativo = ativoEl ? ativoEl.checked : true;
+      await dbUpdate(`treinamentos/${tid}`, { titulo, descricao:desc, ordem, ativo });
+      await audit('EDITAR_TREINAMENTO', `Editou: "${titulo}" (ativo: ${ativo})`);
       toast('Treinamento atualizado.','ok');
     } else {
       await dbPush('treinamentos', { titulo, descricao:desc, ordem, ativo:true, criado_em:new Date().toISOString(), criado_por:S.user.uid });
@@ -1417,7 +1808,11 @@ async function renderRelatorios(){
       </div>
       <div class="flex justify-between items-center mb-2">
         <p class="section-label" style="margin:0">${lista.length} registros</p>
-        <button class="btn btn-ghost btn-sm" onclick="exportarLogs()">⬇ Exportar CSV</button>
+        <div class="flex gap-sm">
+          <button class="btn btn-ghost btn-sm" onclick="exportarLogs()">⬇ Logs CSV</button>
+          <button class="btn btn-ghost btn-sm" onclick="exportarUsuarios()">⬇ Usuários CSV</button>
+          <button class="btn btn-ghost btn-sm" onclick="exportarProgresso()">⬇ Progresso CSV</button>
+        </div>
       </div>
       ${!lista.length ? `<div class="empty-state"><div class="empty-icon">📋</div><h3>Nenhum registro encontrado</h3></div>` : `
       <div class="card"><div class="tbl-wrap"><table id="tabela-logs">
@@ -1429,17 +1824,56 @@ async function renderRelatorios(){
   window._logsData = lista;
 }
 
-function exportarLogs(){
-  if(!window._logsData?.length){ toast('Nenhum dado para exportar.','warn'); return; }
-  const header = ['Data/Hora','Usuário','Perfil','Ação','Detalhes'];
-  const rows = window._logsData.map(l=>[fmtTs(l.ts),l.ator_nome,ROLE_LABEL[l.ator_role]||l.ator_role,l.acao,l.detalhes||'']);
-  const csv = [header,...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+function csvDownload(rows, filename){
+  const csv = rows.map(r=>r.map(c=>`"${String(c==null?'':c).replace(/"/g,'""')}"`).join(',')).join('\n');
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}));
-  a.download = `laadv_logs_${new Date().toISOString().slice(0,10)}.csv`;
+  a.download = filename;
   a.click();
-  toast('Exportado com sucesso!','ok');
+  toast('Exportado: '+filename,'ok');
 }
+
+function exportarLogs(){
+  if(!window._logsData?.length){ toast('Nenhum dado para exportar.','warn'); return; }
+  const header = [['Data/Hora','Usuário','Perfil','Ação','Detalhes']];
+  const rows = window._logsData.map(l=>[fmtTs(l.ts),l.ator_nome,ROLE_LABEL[l.ator_role]||l.ator_role,l.acao,l.detalhes||'']);
+  csvDownload([...header,...rows], `laadv-logs-${new Date().toISOString().slice(0,10)}.csv`);
+}
+
+window.exportarUsuarios = async function(){
+  const data = await dbRead('usuarios');
+  if(!data){ toast('Nenhum dado para exportar.','warn'); return; }
+  const header = [['Nome','Login','Setor','Cargo','Perfil','Status','Criado em']];
+  const rows = Object.values(data).map(u=>[
+    u.nome, u.usuario, u.setor||'', u.cargo||'',
+    ROLE_LABEL[u.role]||u.role,
+    u.ativo?'Ativo':'Inativo',
+    u.criado_em?fmtTs(u.criado_em):''
+  ]);
+  csvDownload([...header,...rows], `laadv-usuarios-${new Date().toISOString().slice(0,10)}.csv`);
+};
+
+window.exportarProgresso = async function(){
+  const [treins, users, concs, prog] = await Promise.all([
+    dbRead('treinamentos'), dbRead('usuarios'), dbRead('conclusoes'), dbRead('progresso')
+  ]);
+  if(!treins||!users){ toast('Nenhum dado para exportar.','warn'); return; }
+  const header = [['Usuário','Treinamento','Total Vídeos','Vídeos Assistidos','% Conclusão','Data Conclusão']];
+  const rows = [];
+  Object.entries(users).forEach(([uid,u])=>{
+    Object.entries(treins).forEach(([tid,t])=>{
+      const nvids   = t.videos ? Object.keys(t.videos).length : 0;
+      const assist  = prog?.[uid]?.[tid] ? Object.keys(prog[uid][tid]).length : 0;
+      const pct     = concs?.[uid]?.[tid] ? 100 : (nvids ? Math.round((assist/nvids)*100) : 0);
+      const dtConc  = concs?.[uid]?.[tid] ? fmtTs(concs[uid][tid]) : '';
+      if(assist>0 || pct>0){
+        rows.push([u.nome, t.titulo, nvids, assist, pct+'%', dtConc]);
+      }
+    });
+  });
+  if(!rows.length){ toast('Nenhum progresso registrado ainda.','warn'); return; }
+  csvDownload([...header,...rows], `laadv-progresso-${new Date().toISOString().slice(0,10)}.csv`);
+};
 
 /* ═══════════════════════════════════════════════════════════════
    PAINEL: CONFIGURAÇÕES (master only)
@@ -1511,6 +1945,7 @@ const ACAO_LABEL = {
   DELETAR_TREINAMENTO:'Excluiu treinamento', ATIVAR_TREINAMENTO:'Ativou treinamento',
   DESATIVAR_TREINAMENTO:'Desativou treinamento',
   ADICIONAR_VIDEO:'Adicionou vídeo', REMOVER_VIDEO:'Removeu vídeo',
+  MARCAR_VIDEO_ASSISTIDO:'Marcou vídeo como assistido',
   CONCLUIR_TREINAMENTO:'Concluiu treinamento',
   EDITAR_CONFIG:'Editou configurações', LIMPAR_LOGS:'Limpou logs', SETUP_INICIAL:'Configuração inicial',
 };

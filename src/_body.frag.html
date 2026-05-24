@@ -1,0 +1,131 @@
+﻿
+<!-- â•â•â•â•â•â• LOADING â•â•â•â•â•â• -->
+<div id="sc-loading" class="screen active">
+  <div class="spinner"></div>
+  <p>Carregando portalâ€¦</p>
+</div>
+
+<!-- â•â•â•â•â•â• SETUP INICIAL â•â•â•â•â•â• -->
+<div id="sc-setup" class="screen teal-screen">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="auth-logo">LA</div>
+      <div><h1>LuÃ­s Albert Advocacia</h1><span>ConfiguraÃ§Ã£o inicial do portal</span></div>
+    </div>
+    <h2 class="auth-title">Bem-vindo ao Portal</h2>
+    <p class="auth-sub">Esta Ã© a primeira vez que o sistema Ã© iniciado. Configure o acesso do administrador principal antes de comeÃ§ar.</p>
+    <div id="setup-alert"></div>
+    <div class="field"><label>Nome da organizaÃ§Ã£o</label>
+      <input type="text" id="s-org" placeholder="Ex: LuÃ­s Albert Advocacia" value="LuÃ­s Albert Advocacia"></div>
+    <div class="field"><label>Login do Admin Master</label>
+      <input type="text" id="s-user" placeholder="Ex: admin.master" autocomplete="off">
+      <div class="hint">Sem espaÃ§os ou caracteres especiais. Use pontos ou underlines.</div></div>
+    <div class="field"><label>Senha</label>
+      <input type="password" id="s-pass" placeholder="MÃ­nimo 6 caracteres"></div>
+    <div class="field"><label>Confirmar senha</label>
+      <input type="password" id="s-pass2" placeholder="Repita a senha"></div>
+    <button class="btn btn-primary btn-full btn-lg mt-2" onclick="doSetup(this)">Criar Portal</button>
+    <div class="auth-footer">Portal de Treinamentos LAADV v2.0 Â· AKE/UFT-1.0</div>
+  </div>
+</div>
+
+<!-- â•â•â•â•â•â• PRIMEIRO ACESSO â•â•â•â•â•â• -->
+<div id="sc-primeiro" class="screen teal-screen">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="auth-logo">LA</div>
+      <div><h1>LuÃ­s Albert Advocacia</h1><span>Portal de Treinamentos</span></div>
+    </div>
+    <h2 class="auth-title">Defina sua senha</h2>
+    <p class="auth-sub">Ã‰ o seu primeiro acesso! Por seguranÃ§a, escolha uma senha pessoal para continuar.</p>
+    <div id="primeiro-alert"></div>
+    <div class="field"><label>Nova senha</label>
+      <input type="password" id="p-pass" placeholder="MÃ­nimo 6 caracteres"></div>
+    <div class="field"><label>Confirmar nova senha</label>
+      <input type="password" id="p-pass2" placeholder="Repita a senha"></div>
+    <button class="btn btn-primary btn-full btn-lg mt-2" onclick="doPrimeiroAcesso(this)">Definir Senha e Entrar</button>
+  </div>
+</div>
+
+<!-- â•â•â•â•â•â• LOGIN â•â•â•â•â•â• -->
+<div id="sc-login" class="screen teal-screen">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="auth-logo">LA</div>
+      <div><h1>LuÃ­s Albert Advocacia</h1><span>Portal de Treinamentos</span></div>
+    </div>
+    <h2 class="auth-title">Acesse sua conta</h2>
+    <p class="auth-sub">Digite seu usuÃ¡rio e senha para entrar. Em caso de dÃºvidas, fale com o administrador.</p>
+    <div id="login-alert"></div>
+    <div class="field"><label>UsuÃ¡rio</label>
+      <input type="text" id="l-user" placeholder="Ex: joao.silva" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('l-pass').focus()"></div>
+    <div class="field"><label>Senha</label>
+      <input type="password" id="l-pass" placeholder="Sua senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <label class="field-checkbox mt-1 mb-2"><input type="checkbox" onchange="toggleSenha(this)"> Mostrar senha</label>
+    <button class="btn btn-primary btn-full btn-lg" onclick="doLogin(this)">Entrar no Portal</button>
+    <div class="auth-footer">LuÃ­s Albert Advocacia Â· Portal v2.0 Â· AKE/UFT-1.0<br>Problemas de acesso? Contate o administrador.</div>
+  </div>
+</div>
+
+<!-- â•â•â•â•â•â• APP â•â•â•â•â•â• -->
+<div id="sc-app" class="screen" style="flex-direction:column">
+
+  <!-- TOPBAR -->
+  <header id="topbar">
+    <button id="toggle-sb" onclick="toggleSidebar()" title="Menu">â˜°</button>
+    <div class="top-brand">
+      <div class="top-logo">LA</div>
+      <div><div class="top-name">LuÃ­s Albert</div><div class="top-sub">Portal de Treinamentos</div></div>
+    </div>
+    <div class="top-user">
+      <div class="top-info">
+        <strong id="top-nome">â€“</strong>
+        <small id="top-role-label">â€“</small>
+      </div>
+      <div class="top-avatar" id="top-avatar" title="Perfil" onclick="navTo('perfil')">?</div>
+      <button class="btn-sair" onclick="doLogout()">Sair</button>
+    </div>
+  </header>
+
+  <!-- BODY -->
+  <div id="sb-backdrop" onclick="fecharSidebarMobile()"></div>
+  <div id="app-body">
+    <!-- SIDEBAR -->
+    <nav id="sidebar">
+      <div id="sb-close"><button onclick="fecharSidebarMobile()" title="Fechar menu">âœ•</button></div>
+      <div id="nav-main"></div>
+      <div class="nav-spacer"></div>
+      <div style="padding:10px 18px;font-size:10px;color:rgba(255,255,255,.25);font-family:monospace" id="nav-ake">AKE/UFT-1.0</div>
+    </nav>
+
+    <!-- CONTENT -->
+    <main id="content">
+      <div class="loading-panel"><div class="spinner" style="width:32px;height:32px"></div> Carregandoâ€¦</div>
+    </main>
+  </div>
+</div>
+
+<!-- â•â•â•â•â•â• MODAL â•â•â•â•â•â• -->
+<div id="modal-overlay" onclick="if(event.target===this)fecharModal()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2 id="modal-title">â€“</h2>
+      <button class="modal-close" onclick="fecharModal()">âœ•</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-foot" id="modal-foot"></div>
+  </div>
+</div>
+
+<!-- â•â•â•â•â•â• TOASTS â•â•â•â•â•â• -->
+<div id="toasts"></div>
+
+<!-- â•â•â•â•â•â• AKE BAR â•â•â•â•â•â• -->
+<div id="ake-bar">
+  <span><span class="ake-dot"></span>AKE/UFT-1.0 online</span>
+  <span id="ake-info">TC-LAADV-20250524</span>
+  <span id="ake-ts">â€“</span>
+</div>
+
+
+// AKE/UFT-1.0 | BUILD: LAADV-20260524 | IC: 1.0 | MÓDULO: HTML body / telas / modais

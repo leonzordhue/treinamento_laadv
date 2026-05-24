@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RH & Documentos · Luís Albert Advocacia</title>
+  <link rel="stylesheet" href="../core/style.css">
+  <style>
+    /* page-header herdado de style.css — teal LAADV */
+
+    .colab-avatar {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      background: var(--primary-light);
+      color: var(--primary);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 14px;
+      flex-shrink: 0;
+    }
+    /* situacao badges herdados de style.css */
+
+    /* Modal simples */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 500;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: var(--shadow-lg);
+    }
+    /* modal styles herdados de style.css */
+  </style>
+</head>
+<body>
+
+<div id="topbar-container"></div>
+
+<div class="sub-nav">
+  <div class="sub-nav-left">
+    <a href="/index.html" class="back-btn">← Portal</a>
+    <div class="sub-nav-sep"></div>
+    <span class="sub-nav-title">RH & Documentos</span>
+  </div>
+  <div>
+    <button class="btn btn-primary btn-sm" onclick="openModal()">+ Novo Colaborador</button>
+  </div>
+</div>
+
+<div class="page-header">
+  <div style="max-width:1100px;margin:0 auto">
+    <h1>📋 RH & Documentos</h1>
+    <p>Gestão de colaboradores, admissões e geração de contratos</p>
+  </div>
+</div>
+
+<main class="page-main pb-ake">
+
+  <!-- Stats -->
+  <div class="grid-4 mb-3">
+    <div class="card card-pad" style="display:flex;gap:14px;align-items:center">
+      <div style="font-size:22px">👥</div>
+      <div><div class="stat-value" id="s-total">–</div><div class="stat-label">Colaboradores</div></div>
+    </div>
+    <div class="card card-pad" style="display:flex;gap:14px;align-items:center">
+      <div style="font-size:22px">✅</div>
+      <div><div class="stat-value" id="s-ativos">–</div><div class="stat-label">Ativos</div></div>
+    </div>
+    <div class="card card-pad" style="display:flex;gap:14px;align-items:center">
+      <div style="font-size:22px">🏖</div>
+      <div><div class="stat-value" id="s-ferias">–</div><div class="stat-label">Em férias</div></div>
+    </div>
+    <div class="card card-pad" style="display:flex;gap:14px;align-items:center">
+      <div style="font-size:22px">📄</div>
+      <div><div class="stat-value">31</div><div class="stat-label">Contratos vigentes</div></div>
+    </div>
+  </div>
+
+  <!-- Tabela colaboradores -->
+  <div class="flex justify-between items-center mb-2">
+    <p class="section-label" style="margin-bottom:0">Colaboradores cadastrados</p>
+    <button class="btn btn-ghost btn-sm" onclick="gerarContrato()">📄 Gerar Contrato PDF</button>
+  </div>
+  <div class="card" style="overflow:hidden">
+    <table class="table" id="colab-table">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Setor</th>
+          <th>Cargo</th>
+          <th>Admissão</th>
+          <th>Situação</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="colab-body"></tbody>
+    </table>
+  </div>
+
+  <!-- Documentos recentes -->
+  <div class="flex justify-between items-center mb-2 mt-4">
+    <p class="section-label" style="margin-bottom:0">Documentos gerados recentemente</p>
+  </div>
+  <div class="card card-pad">
+    <div style="display:flex;flex-direction:column;gap:12px" id="docs-list">
+      <div class="flex justify-between items-center" style="padding:10px 0;border-bottom:1px solid var(--border)">
+        <div>
+          <div style="font-size:14px;font-weight:500">Contrato de Trabalho — Ana Silva</div>
+          <div class="text-small text-muted">Gerado em 15/05/2025 · PDF</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="TC.toast.info('Download disponível em breve.')">⬇ Download</button>
+      </div>
+      <div class="flex justify-between items-center" style="padding:10px 0;border-bottom:1px solid var(--border)">
+        <div>
+          <div style="font-size:14px;font-weight:500">Termo de Férias — Diego Lima</div>
+          <div class="text-small text-muted">Gerado em 10/05/2025 · PDF</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="TC.toast.info('Download disponível em breve.')">⬇ Download</button>
+      </div>
+      <div class="flex justify-between items-center" style="padding:10px 0">
+        <div>
+          <div style="font-size:14px;font-weight:500">Declaração de Vínculo — Bruno Matos</div>
+          <div class="text-small text-muted">Gerado em 08/05/2025 · PDF</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="TC.toast.info('Download disponível em breve.')">⬇ Download</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- Modal novo colaborador -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2>Novo Colaborador</h2>
+    <div class="form-group">
+      <label class="form-label">Nome completo</label>
+      <input class="input" id="f-nome" placeholder="Ex: João da Silva">
+    </div>
+    <div class="grid-2" style="gap:14px">
+      <div class="form-group">
+        <label class="form-label">Setor</label>
+        <input class="input" id="f-setor" placeholder="Ex: Operações">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cargo</label>
+        <input class="input" id="f-cargo" placeholder="Ex: Técnico">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Data de Admissão</label>
+      <input class="input" type="date" id="f-admissao">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarColab()">Salvar Colaborador</button>
+    </div>
+  </div>
+</div>
+
+<footer class="ake-bar">
+  <span><span class="ake-dot-live"></span>AKE/UFT-1.0 online</span>
+  <span id="ake-info">–</span>
+  <span id="ake-ts">–</span>
+</footer>
+
+<script src="../core/treinamento-core.js"></script>
+<script>
+  TC.initPlatform('rh');
+  const user = TC.auth.requireModule('rh');
+  if (!user) throw new Error('acesso negado');
+
+  TC.renderTopbar('topbar-container');
+
+  const colabs = TC.data.getColaboradores();
+  document.getElementById('s-total').textContent  = colabs.length;
+  document.getElementById('s-ativos').textContent  = colabs.filter(c => c.situacao === 'ativo').length;
+  document.getElementById('s-ferias').textContent  = colabs.filter(c => c.situacao === 'ferias').length;
+
+  const badge = {
+    ativo:   'badge-green',
+    ferias:  'badge-yellow',
+    inativo: 'badge-red',
+  };
+  const label = { ativo: 'Ativo', ferias: 'Férias', inativo: 'Inativo' };
+
+  const tbody = document.getElementById('colab-body');
+  colabs.forEach(c => {
+    tbody.insertAdjacentHTML('beforeend', `
+      <tr>
+        <td>
+          <div class="flex items-center gap-1" style="gap:10px">
+            <div class="colab-avatar">${TC.utils.initials(c.nome)}</div>
+            ${c.nome}
+          </div>
+        </td>
+        <td>${c.setor}</td>
+        <td>${c.cargo}</td>
+        <td>${TC.utils.date(c.admissao)}</td>
+        <td><span class="badge ${badge[c.situacao]}">${label[c.situacao]}</span></td>
+        <td>
+          <button class="btn btn-ghost btn-sm" onclick="TC.toast.info('Editar — em desenvolvimento.')">Editar</button>
+        </td>
+      </tr>`);
+  });
+
+  function openModal()  { document.getElementById('modal').classList.add('open'); }
+  function closeModal() { document.getElementById('modal').classList.remove('open'); }
+  function salvarColab() {
+    const nome = document.getElementById('f-nome').value.trim();
+    if (!nome) { TC.toast.warn('Informe o nome do colaborador.'); return; }
+    TC.toast.success(`Colaborador "${nome}" cadastrado com sucesso!`);
+    closeModal();
+  }
+  function gerarContrato() {
+    TC.toast.info('Geração de contrato PDF — em desenvolvimento.');
+  }
+
+  document.getElementById('modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal')) closeModal();
+  });
+</script>
+</body>
+</html>
