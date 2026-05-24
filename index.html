@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0B4A44">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://*.ytimg.com https://i.ytimg.com; connect-src 'self' https://*.firebaseio.com wss://*.firebaseio.com https://*.googleapis.com; frame-src https://www.youtube.com https://youtube.com; object-src 'none'; base-uri 'self';">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Portal de Treinamentos · Luís Albert Advocacia</title>
@@ -522,20 +523,32 @@ async function sha256(str){
 }
 
 /* ── SESSION ───────────────────────────────────────────────────── */
-function saveSession(u){ sessionStorage.setItem('_laadv', JSON.stringify(u)); }
+const _SESS_TTL = 8*60*60*1000;
+function saveSession(u){
+  sessionStorage.setItem('_laadv', JSON.stringify({ ...u, _sc: Date.now(), _ua: navigator.userAgent.slice(0,200) }));
+}
 function clearSession(){ sessionStorage.removeItem('_laadv'); }
-function getSession(){ try{ return JSON.parse(sessionStorage.getItem('_laadv')); }catch{ return null; } }
+function getSession(){
+  try{
+    const s = JSON.parse(sessionStorage.getItem('_laadv'));
+    if(!s) return null;
+    if((Date.now() - (s._sc||0)) > _SESS_TTL){ clearSession(); return null; }
+    if(s._ua && s._ua !== navigator.userAgent.slice(0,200)){ clearSession(); return null; }
+    return s;
+  }catch{ return null; }
+}
 
 /* ── AUDIT LOG ─────────────────────────────────────────────────── */
 async function audit(acao, detalhes=''){
   if(!S.user) return;
+  const safe = String(detalhes).replace(/\b[0-9a-f]{64}\b/gi,'[REDACTED]').slice(0,500);
   await dbPush('logs', {
     ts: new Date().toISOString(),
     ator_id:   S.user.uid,
     ator_nome: S.user.nome,
     ator_role: S.user.role,
     acao,
-    detalhes
+    detalhes: safe
   });
   document.getElementById('ake-ts').textContent = new Date().toLocaleString('pt-BR');
 }
@@ -669,6 +682,7 @@ function buildNav(){
 }
 
 async function navTo(panel){
+  if(S.user && !getSession()){ doLogout(); return; }
   S.panel = panel; S.subView = null;
   buildNav();
   fecharSidebarMobile();
@@ -691,6 +705,33 @@ function podeResetarSenha(alvo_role){
 }
 
 /* ── AUTH ──────────────────────────────────────────────────────── */
+const _RL_MAX = 5, _RL_WIN = 15*60*1000;
+const _MSG_CRED = 'Usuário ou senha incorretos.';
+
+async function _rlCheck(login){
+  try{
+    const t = await dbRead(`tentativas/${login}`);
+    if(!t) return false;
+    if(t.bloqueado_ate && Date.now() < t.bloqueado_ate) return true;
+    if(t.bloqueado_ate) await dbRemove(`tentativas/${login}`);
+    return false;
+  }catch{ return false; }
+}
+
+async function _rlFail(login){
+  try{
+    const t = await dbRead(`tentativas/${login}`);
+    const count = (t?.count||0) + 1;
+    const payload = { count, ts: new Date().toISOString() };
+    if(count >= _RL_MAX) payload.bloqueado_ate = Date.now() + _RL_WIN;
+    await db.ref(`${ROOT}/tentativas/${login}`).set(payload);
+  }catch{}
+}
+
+async function _rlClear(login){
+  try{ await dbRemove(`tentativas/${login}`); }catch{}
+}
+
 async function doLogin(btn){
   const usuario = document.getElementById('l-user').value.trim().toLowerCase();
   const senha   = document.getElementById('l-pass').value;
@@ -700,17 +741,22 @@ async function doLogin(btn){
 
   setBtnLoading(btn, true);
   try {
+    if(await _rlCheck(usuario)){
+      alrt.innerHTML = `<div class="alert alert-err">Conta temporariamente bloqueada. Tente em 15 minutos.</div>`;
+      return;
+    }
+
     const snap = await db.ref(`${ROOT}/usuarios`).orderByChild('usuario').equalTo(usuario).once('value');
     const val = snap.val();
-    if(!val){ alrt.innerHTML = `<div class="alert alert-err">Usuário não encontrado.</div>`; return; }
+    if(!val){ await _rlFail(usuario); alrt.innerHTML = `<div class="alert alert-err">${_MSG_CRED}</div>`; return; }
 
     const uid = Object.keys(val)[0];
     const u   = val[uid];
-    if(!u.ativo){ alrt.innerHTML = `<div class="alert alert-err">Conta desativada. Fale com o administrador.</div>`; return; }
 
     const hash = await sha256(senha);
-    if(hash !== u.senha_hash){ alrt.innerHTML = `<div class="alert alert-err">Senha incorreta.</div>`; return; }
+    if(hash !== u.senha_hash || !u.ativo){ await _rlFail(usuario); alrt.innerHTML = `<div class="alert alert-err">${_MSG_CRED}</div>`; return; }
 
+    await _rlClear(usuario);
     S.user = { uid, ...u };
     saveSession(S.user);
 
@@ -723,7 +769,6 @@ async function doLogin(btn){
     await audit('LOGIN', 'Acesso ao portal');
   } catch(e){
     alrt.innerHTML = `<div class="alert alert-err">Erro ao conectar. Verifique sua conexão.</div>`;
-    console.error(e);
   } finally {
     setBtnLoading(btn, false);
   }
@@ -1599,6 +1644,9 @@ async function renderPerfil(){
           <div class="divider"></div>
           <p class="text-sm text-muted"><strong>Login:</strong> ${esc(u.usuario)}</p>
           <p class="text-sm text-muted mt-1"><strong>Membro desde:</strong> ${u.criado_em ? fmtData(u.criado_em) : '–'}</p>
+          <div class="divider"></div>
+          <div id="lgpd-alert"></div>
+          <button class="btn btn-ghost btn-sm" style="color:var(--muted);font-size:12px" onclick="solicitarExclusaoDados(this)">Solicitar exclusão dos meus dados</button>
         </div>
       </div>
       <div class="card card-pad" style="margin-top:var(--gap)">
@@ -1665,6 +1713,29 @@ async function salvarPerfil(btn){
     setBtnLoading(btn, false);
   }
 }
+
+window.solicitarExclusaoDados = async function(btn){
+  const alrt = document.getElementById('lgpd-alert');
+  if(alrt && alrt.dataset.enviado) return;
+  confirmar('Confirma a solicitação de exclusão dos seus dados? O responsável pelo sistema será notificado.',
+    async function(){
+      setBtnLoading(btn, true);
+      try {
+        const uid = S.user.uid;
+        await dbSet(`solicitacoes_exclusao/${uid}`, {
+          uid, nome: S.user.nome, ts: new Date().toISOString(), status:'pendente'
+        });
+        await audit('SOLICITAR_EXCLUSAO', `Solicitação de exclusão de dados`);
+        if(alrt){ alrt.innerHTML=`<div class="alert alert-ok" style="font-size:12px">Solicitação registrada. O administrador será notificado.</div>`; alrt.dataset.enviado='1'; }
+        toast('Solicitação enviada.','ok');
+      } catch(e){
+        if(alrt) alrt.innerHTML=`<div class="alert alert-err">Erro: ${e.message}</div>`;
+      } finally {
+        setBtnLoading(btn, false);
+      }
+    }
+  );
+};
 
 async function alterarSenha(btn){
   const atual  = document.getElementById('pf-atual').value;
@@ -2518,7 +2589,9 @@ window.exportarProgresso = async function(){
    ═══════════════════════════════════════════════════════════════ */
 async function renderConfig(){
   if(S.user.role !== 'master'){ document.getElementById('content').innerHTML=`<div class="page-body"><div class="alert alert-err">Acesso restrito.</div></div>`; return; }
-  const cfg = await dbRead('config');
+  const [cfg, solics] = await Promise.all([dbRead('config'), dbRead('solicitacoes_exclusao')]);
+  const solicsArr = solics ? Object.entries(solics).filter(([,s])=>s.status==='pendente') : [];
+
   document.getElementById('content').innerHTML = `
     <div class="page-header"><h1>⚙️ Configurações do Sistema</h1><p>Gerenciamento avançado da plataforma.</p></div>
     <div class="page-body">
@@ -2538,6 +2611,19 @@ async function renderConfig(){
           <p class="text-sm text-muted mb-2">Ações irreversíveis. Tenha certeza antes de prosseguir.</p>
           <button class="btn btn-danger btn-sm mt-2" onclick="limparLogs()">🗑 Limpar todos os logs</button>
         </div>
+      </div>
+      <div class="card card-pad" style="margin-top:var(--gap)">
+        <h3 style="margin-bottom:14px;color:var(--teal)">Solicitações de Exclusão de Dados</h3>
+        ${!solicsArr.length
+          ? `<p class="text-sm text-muted">Nenhuma solicitação pendente.</p>`
+          : solicsArr.map(([uid,s])=>`
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
+              <div style="flex:1">
+                <div style="font-weight:500;font-size:14px">${esc(s.nome)}</div>
+                <div class="text-sm text-muted">Solicitado em ${fmtTs(s.ts)}</div>
+              </div>
+              <button class="btn btn-danger btn-sm" onclick="processarExclusao('${uid}','${esc(s.nome)}')">Processar</button>
+            </div>`).join('')}
       </div>
     </div>`;
 }
@@ -2568,10 +2654,28 @@ function limparLogs(){
   );
 }
 
+window.processarExclusao = function(uid, nome){
+  confirmar(`Processar exclusão de dados de <strong>${nome}</strong>? Isso removerá os dados do usuário do sistema.`,
+    async function(){
+      await Promise.all([
+        dbRemove(`usuarios/${uid}`),
+        dbRemove(`conclusoes/${uid}`),
+        dbRemove(`progresso/${uid}`),
+        dbRemove(`respostas/${uid}`),
+        dbSet(`solicitacoes_exclusao/${uid}/status`, 'processado'),
+      ]);
+      await audit('EXCLUSAO_DADOS', `Dados excluídos para: ${nome}`);
+      toast(`Dados de ${nome} removidos.`,'ok');
+      await renderConfig();
+    }
+  );
+};
+
 /* ─── HELPERS ──────────────────────────────────────────────────── */
 function iniciais(nome){ return (nome||'?').split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase(); }
 function primeiroNome(nome){ return (nome||'').split(' ')[0]; }
-function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function sanitize(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
+function esc(s){ return sanitize(s); }
 function fmtTs(ts){ try{ return new Date(ts).toLocaleString('pt-BR'); }catch{ return ts; } }
 function fmtData(ts){ try{ return new Date(ts).toLocaleDateString('pt-BR'); }catch{ return ts; } }
 const ACAO_LABEL = {
@@ -2590,6 +2694,7 @@ const ACAO_LABEL = {
   QUIZ_APROVADO:'Aprovado na avaliação', QUIZ_REPROVADO:'Reprovado na avaliação',
   CONCLUIR_TREINAMENTO:'Concluiu treinamento',
   EDITAR_CONFIG:'Editou configurações', LIMPAR_LOGS:'Limpou logs', SETUP_INICIAL:'Configuração inicial',
+  SOLICITAR_EXCLUSAO:'Solicitou exclusão de dados', EXCLUSAO_DADOS:'Processou exclusão de dados',
 };
 function fmtAcao(a){ return ACAO_LABEL[a]||a; }
 function extrairYtId(url){

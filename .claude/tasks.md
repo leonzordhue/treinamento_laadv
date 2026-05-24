@@ -274,7 +274,7 @@
 
 ---
 
-### [ ] TASK-28 — Hardening de segurança ← LEXGROUP (CONFIDENCIAL)
+### [x] TASK-28 — Hardening de segurança ← LEXGROUP (CONFIDENCIAL)
 > Documentação completa em `.claude/SECURITY_PRIVADO.md` (git-ignored, nunca commitar).
 > Não adicionar comentários explicativos no código sobre o que cada proteção faz.
 
@@ -335,3 +335,4 @@ Após TASK-28 concluída: revisar, testar via preview e fazer commit+push (sem m
 | 2026-05-24 | Lexgroup   | TASK-24 concluída — Dark mode: body.dark CSS vars, toggleDarkMode(), localStorage, botão ☀️/🌙 no topbar |
 | 2026-05-24 | Lexgroup   | TASK-25 concluída — Paginação logs: limitToLast(50), carregarMaisLogs() com endBefore(), indicador de total |
 | 2026-05-24 | Lexgroup   | TASK-26 concluída — PWA: manifest.json, sw.js (cache-first shell, network-only Firebase), meta theme-color, SW registration |
+| 2026-05-24 | Lexgroup   | TASK-28 concluída — A: sanitize()+esc(); B: rate-limit login 5x/15min; C: CSP meta tag; D: LGPD exclusão (solicitarExclusaoDados+processarExclusao); E: sessão 8h+UA; F: scrub SHA-256 em audit() |

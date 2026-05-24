@@ -167,6 +167,36 @@
         }
       },
 
+      /* ── RATE LIMITING LOGIN ────────────────────────────────────
+         Escrita pública (pré-autenticação). Leitura restrita.
+      ──────────────────────────────────────────────────────────── */
+      "tentativas": {
+        ".read": true,
+        ".write": true,
+        "$login": {
+          ".validate": "newData.hasChildren(['count','ts'])",
+          "count":        { ".validate": "newData.isNumber()" },
+          "ts":           { ".validate": "newData.isString()" },
+          "bloqueado_ate":{ ".validate": "newData.isNumber()" },
+          "$other":       { ".validate": false }
+        }
+      },
+
+      /* ── SOLICITAÇÕES DE EXCLUSÃO LGPD ──────────────────────────
+         Usuário grava sua própria solicitação. Master lê e processa.
+      ──────────────────────────────────────────────────────────── */
+      "solicitacoes_exclusao": {
+        ".read": true,
+        ".write": true,
+        "$uid": {
+          "uid":    { ".validate": "newData.isString()" },
+          "nome":   { ".validate": "newData.isString() && newData.val().length <= 120" },
+          "ts":     { ".validate": "newData.isString()" },
+          "status": { ".validate": "newData.val() === 'pendente' || newData.val() === 'processado'" },
+          "$other": { ".validate": false }
+        }
+      },
+
       /* ── QUALQUER OUTRA CHAVE ────────────────────────────────────
          Bloqueia criação de nós fora da estrutura definida.
       ──────────────────────────────────────────────────────────── */
