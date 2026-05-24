@@ -1,0 +1,1582 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal de Treinamentos · Luís Albert Advocacia</title>
+
+<!-- Firebase Realtime Database -->
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
+<!-- Fontes LAADV -->
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════════════════════════════════════════════════
+   LAADV DESIGN SYSTEM — Portal de Treinamentos
+   ═══════════════════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --teal:#0B4A44; --teal-mid:#145E58; --teal-dark:#083830; --teal-light:#EBF5F4;
+  --gold:#C9A93E; --gold-hover:#B8951E; --gold-light:#FAF3E0;
+  --bg:#F5F7F9; --surface:#fff; --border:#DDE3EC; --border-dark:#C8D2DE;
+  --text:#162030; --muted:#5A6A7A; --light:#8A9BAB;
+  --success:#1A7A4A; --success-bg:#E0F5EC;
+  --danger:#C0392B;  --danger-bg:#FDECEA;
+  --warn:#C9A93E;    --warn-bg:#FAF3E0;
+  --info-bg:#EBF5F4;
+  --sh-sm:0 1px 4px rgba(11,74,68,.08);
+  --sh-md:0 4px 18px rgba(11,74,68,.11);
+  --sh-lg:0 8px 36px rgba(11,74,68,.15);
+  --r:10px; --r-sm:7px; --r-lg:16px;
+  --sidebar:240px; --topbar:62px; --akebar:30px;
+}
+
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.5}
+h1,h2,h3{font-family:'Cormorant Garamond',serif}
+a{text-decoration:none;color:inherit}
+input,select,textarea,button{font-family:inherit}
+
+/* ── TELAS ── */
+.screen{display:none;position:fixed;inset:0;z-index:10}
+.screen.active{display:flex}
+
+/* ── LOADING ── */
+#sc-loading{background:var(--teal);align-items:center;justify-content:center;flex-direction:column;gap:20px}
+.spinner{width:44px;height:44px;border:4px solid rgba(201,169,62,.3);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#sc-loading p{color:rgba(255,255,255,.7);font-size:14px}
+
+/* ── TELA TEAL (login / setup) ── */
+.teal-screen{background:linear-gradient(135deg,var(--teal-dark) 0%,var(--teal) 55%,var(--teal-mid) 100%);align-items:center;justify-content:center;min-height:100vh;position:relative;overflow:hidden}
+.teal-screen::before{content:'';position:absolute;inset:0;background-image:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.022'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E")}
+.teal-screen::after{content:'';position:absolute;width:500px;height:500px;background:radial-gradient(circle,rgba(201,169,62,.09) 0%,transparent 70%);top:-120px;right:-80px;border-radius:50%}
+
+.auth-card{background:#fff;border-radius:var(--r-lg);border-top:4px solid var(--gold);padding:44px 48px;width:100%;max-width:440px;box-shadow:var(--sh-lg);position:relative;z-index:1}
+@media(max-width:500px){.auth-card{padding:32px 24px;border-radius:0;max-width:100%;height:100%;overflow-y:auto}}
+.auth-brand{display:flex;align-items:center;gap:14px;margin-bottom:32px;padding-bottom:28px;border-bottom:1px solid var(--border)}
+.auth-logo{width:50px;height:50px;background:var(--teal);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:20px;color:var(--gold);flex-shrink:0}
+.auth-brand h1{font-size:20px;color:var(--teal);line-height:1.2}
+.auth-brand span{font-size:12px;color:var(--muted)}
+.auth-title{font-size:22px;color:var(--teal);margin-bottom:5px}
+.auth-sub{font-size:13px;color:var(--muted);margin-bottom:26px;line-height:1.6}
+.auth-footer{margin-top:28px;padding-top:20px;border-top:1px solid var(--border);text-align:center;font-size:11px;color:var(--light);line-height:1.9}
+
+/* ── INPUTS / FORMS ── */
+.field{margin-bottom:18px}
+.field label{display:block;font-size:13px;font-weight:500;color:var(--text);margin-bottom:6px}
+.field .hint{font-size:11px;color:var(--muted);margin-top:4px}
+input[type=text],input[type=password],input[type=email],input[type=date],select,textarea{
+  width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:var(--r-sm);
+  font-size:14px;color:var(--text);background:#fff;outline:none;
+  transition:border-color .2s,box-shadow .2s}
+input:focus,select:focus,textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(11,74,68,.12)}
+.input-row{display:flex;gap:12px}
+.input-row>*{flex:1}
+.field-checkbox{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);cursor:pointer}
+.field-checkbox input{width:auto}
+
+/* ── BOTÕES ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 20px;border-radius:var(--r-sm);font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all .18s;white-space:nowrap}
+.btn-primary{background:var(--teal);color:#fff}   .btn-primary:hover{background:var(--teal-mid)}
+.btn-gold{background:var(--gold);color:var(--teal-dark);font-weight:600} .btn-gold:hover{background:var(--gold-hover)}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)} .btn-ghost:hover{background:var(--bg)}
+.btn-danger{background:var(--danger);color:#fff} .btn-danger:hover{opacity:.88}
+.btn-success{background:var(--success);color:#fff} .btn-success:hover{opacity:.88}
+.btn-sm{padding:7px 14px;font-size:13px}
+.btn-lg{padding:14px 28px;font-size:15px}
+.btn-full{width:100%}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:500}
+.badge-teal{background:var(--teal-light);color:var(--teal)}
+.badge-gold{background:var(--gold-light);color:#7A5A10}
+.badge-green{background:var(--success-bg);color:var(--success)}
+.badge-red{background:var(--danger-bg);color:var(--danger)}
+.badge-gray{background:#EEF2F5;color:var(--muted)}
+
+/* ── APP SHELL ── */
+#sc-app{flex-direction:column}
+#topbar{
+  height:var(--topbar);background:var(--teal);border-bottom:3px solid var(--gold);
+  display:flex;align-items:center;padding:0 20px;gap:14px;flex-shrink:0;position:sticky;top:0;z-index:50}
+#toggle-sb{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;width:38px;height:38px;border-radius:var(--r-sm);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.top-brand{display:flex;align-items:center;gap:10px;flex:1}
+.top-logo{width:34px;height:34px;background:var(--gold);border-radius:7px;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--teal-dark);flex-shrink:0}
+.top-name{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;color:#fff;line-height:1}
+.top-sub{font-size:10px;color:rgba(255,255,255,.6)}
+.top-user{display:flex;align-items:center;gap:10px;margin-left:auto}
+.top-avatar{width:36px;height:36px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:var(--teal-dark);flex-shrink:0;cursor:pointer}
+.top-info{text-align:right}
+.top-info strong{display:block;font-size:13px;color:#fff}
+.top-info small{font-size:11px;color:rgba(255,255,255,.6)}
+.btn-sair{padding:7px 14px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:var(--r-sm);font-size:13px;cursor:pointer;transition:background .2s}
+.btn-sair:hover{background:rgba(255,255,255,.2)}
+
+#app-body{display:flex;flex:1;overflow:hidden}
+
+/* ── SIDEBAR ── */
+#sidebar{
+  width:var(--sidebar);background:var(--teal-dark);flex-shrink:0;
+  display:flex;flex-direction:column;overflow-y:auto;transition:width .25s,transform .25s;
+  padding:16px 0}
+#sidebar.collapsed{width:64px}
+#sidebar.collapsed .nav-label,.sidebar-closed .nav-label{display:none}
+#sidebar.collapsed .nav-divider span{display:none}
+.nav-item{
+  display:flex;align-items:center;gap:12px;padding:11px 18px;color:rgba(255,255,255,.7);
+  font-size:14px;cursor:pointer;border-radius:0;transition:background .18s,color .18s;
+  border-left:3px solid transparent;white-space:nowrap;overflow:hidden}
+.nav-item:hover{background:rgba(255,255,255,.07);color:#fff}
+.nav-item.active{background:rgba(201,169,62,.15);color:var(--gold);border-left-color:var(--gold)}
+.nav-icon{font-size:18px;flex-shrink:0;width:22px;text-align:center}
+.nav-divider{padding:18px 18px 6px;font-size:10px;font-weight:600;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap;overflow:hidden}
+.nav-spacer{flex:1}
+
+/* ── CONTENT ── */
+#content{flex:1;overflow-y:auto;padding-bottom:var(--akebar)}
+.page-header{background:linear-gradient(135deg,var(--teal) 0%,var(--teal-mid) 100%);border-bottom:3px solid var(--gold);padding:28px 32px;color:#fff}
+.page-header h1{font-size:26px;font-weight:700}
+.page-header p{font-size:13px;opacity:.75;margin-top:4px}
+.page-body{padding:28px 32px;max-width:1100px}
+
+/* ── CARDS ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-sm)}
+.card-pad{padding:22px}
+.card-head{padding:14px 20px;border-bottom:1px solid var(--border);background:var(--teal-light);border-radius:var(--r) var(--r) 0 0}
+.card-head h3{font-size:15px;font-weight:600;color:var(--teal)}
+
+/* ── GRID ── */
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.grid-4{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px}
+
+/* ── STATS ── */
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;display:flex;align-items:center;gap:14px;box-shadow:var(--sh-sm)}
+.stat-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.stat-val{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:700;line-height:1}
+.stat-lbl{font-size:12px;color:var(--muted);margin-top:2px}
+
+/* ── KPI ── */
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px 22px;position:relative;overflow:hidden}
+.kpi-card::after{content:'';position:absolute;top:0;right:0;width:4px;height:100%}
+.kpi-teal::after{background:var(--teal)} .kpi-gold::after{background:var(--gold)}
+.kpi-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.kpi-value{font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:700;line-height:1}
+.kpi-delta{font-size:12px;margin-top:6px}
+.up{color:var(--success)} .down{color:var(--danger)}
+
+/* ── TABELA ── */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+thead tr{background:var(--teal);color:#fff}
+th{text-align:left;padding:11px 14px;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.4px}
+td{padding:12px 14px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--teal-light)}
+.td-actions{display:flex;gap:6px;flex-wrap:wrap}
+
+/* ── TRAINING CARDS ── */
+.training-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh-sm);transition:box-shadow .2s,border-color .2s;cursor:pointer}
+.training-card:hover{box-shadow:var(--sh-md);border-color:var(--gold)}
+.tc-header{background:linear-gradient(135deg,var(--teal),var(--teal-mid));padding:20px;color:#fff;min-height:90px}
+.tc-header h3{font-size:16px;font-weight:600;margin-bottom:4px}
+.tc-header p{font-size:12px;opacity:.75;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tc-body{padding:16px 18px}
+.tc-meta{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted);margin-bottom:10px}
+.tc-progress{height:6px;background:var(--bg);border-radius:99px;overflow:hidden}
+.tc-fill{height:100%;background:var(--gold);border-radius:99px;transition:width .5s}
+
+/* ── VIDEO PLAYER ── */
+.video-list{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.video-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;transition:background .18s,border-color .18s}
+.video-item:hover,.video-item.active{background:var(--teal-light);border-color:var(--teal)}
+.video-item.done{border-left:3px solid var(--success)}
+.vi-num{width:28px;height:28px;border-radius:50%;background:var(--teal);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.vi-info{flex:1}
+.vi-title{font-size:14px;font-weight:500}
+.vi-dur{font-size:12px;color:var(--muted)}
+.video-embed{width:100%;aspect-ratio:16/9;border-radius:var(--r);overflow:hidden;background:#000;margin-bottom:16px}
+.video-embed iframe,.video-embed video{width:100%;height:100%;border:none}
+
+/* ── PROGRESSO USUARIO ── */
+.progress-big{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:24px;margin-bottom:24px}
+.prog-bar{height:12px;background:var(--bg);border-radius:99px;overflow:hidden;margin:12px 0 6px}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--teal),var(--gold));border-radius:99px;transition:width .6s}
+
+/* ── PERFIL ── */
+.perfil-avatar-big{width:80px;height:80px;border-radius:50%;background:var(--teal);color:var(--gold);font-family:'Cormorant Garamond',serif;font-weight:700;font-size:32px;display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+
+/* ── MODAL ── */
+#modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center}
+#modal-overlay.open{display:flex}
+.modal-box{background:#fff;border-radius:var(--r-lg);border-top:3px solid var(--gold);padding:0;width:100%;max-width:520px;box-shadow:var(--sh-lg);max-height:90vh;display:flex;flex-direction:column}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--border)}
+.modal-head h2{font-size:20px;color:var(--teal)}
+.modal-close{background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer;padding:2px 6px;border-radius:var(--r-sm)}
+.modal-close:hover{background:var(--bg)}
+.modal-body{padding:24px;overflow-y:auto}
+.modal-foot{padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px}
+
+/* ── TOASTS ── */
+#toasts{position:fixed;top:16px;right:16px;z-index:300;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{display:flex;align-items:center;gap:10px;padding:12px 16px;background:#fff;border:1px solid var(--border);border-radius:var(--r-sm);box-shadow:var(--sh-lg);font-size:13px;min-width:260px;max-width:360px;animation:slideIn .3s ease;pointer-events:auto}
+.toast-ok{border-left:4px solid var(--success)}
+.toast-err{border-left:4px solid var(--danger)}
+.toast-warn{border-left:4px solid var(--gold)}
+.toast-info{border-left:4px solid var(--teal)}
+@keyframes slideIn{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* ── AKE BAR ── */
+#ake-bar{position:fixed;bottom:0;left:0;right:0;height:var(--akebar);background:var(--teal-dark);color:rgba(255,255,255,.45);font-size:10px;font-family:monospace;display:flex;align-items:center;justify-content:space-between;padding:0 20px;z-index:40}
+.ake-dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--gold);margin-right:5px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── UTILS ── */
+.flex{display:flex} .items-center{align-items:center} .justify-between{justify-content:space-between}
+.gap-sm{gap:8px} .gap-md{gap:14px}
+.mt-1{margin-top:8px} .mt-2{margin-top:16px} .mt-3{margin-top:24px} .mt-4{margin-top:32px}
+.mb-2{margin-bottom:16px} .mb-3{margin-bottom:24px}
+.text-muted{color:var(--muted)} .text-sm{font-size:13px} .text-gold{color:var(--gold)} .text-teal{color:var(--teal)}
+.section-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px}
+.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
+.empty-state{text-align:center;padding:60px 24px;color:var(--muted)}
+.empty-state .empty-icon{font-size:48px;margin-bottom:14px}
+.empty-state h3{font-size:18px;color:var(--text);margin-bottom:6px}
+.empty-state p{font-size:14px;max-width:320px;margin:0 auto}
+.loading-panel{display:flex;align-items:center;justify-content:center;padding:80px;color:var(--muted);gap:12px}
+.alert{padding:12px 16px;border-radius:var(--r-sm);font-size:14px;margin-bottom:16px}
+.alert-err{background:var(--danger-bg);color:var(--danger);border:1px solid #FECACA}
+.alert-ok{background:var(--success-bg);color:var(--success);border:1px solid #A7F3D0}
+.alert-warn{background:var(--warn-bg);color:#7A5A10;border:1px solid #FDE68A}
+
+@media(max-width:768px){
+  #sidebar{position:fixed;left:0;top:var(--topbar);bottom:var(--akebar);z-index:30;transform:translateX(-100%)}
+  #sidebar.mobile-open{transform:translateX(0)}
+  .page-body{padding:20px 16px}
+  .page-header{padding:22px 16px}
+  .grid-4{grid-template-columns:repeat(2,1fr)}
+  .auth-card{max-width:100%;border-radius:0;height:100%;overflow-y:auto;padding:32px 20px}
+}
+
+/* ── MOBILE DRAWER ── */
+@media(min-width:769px){#toggle-sb{display:none}}
+#sb-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:29;cursor:pointer}
+#sb-backdrop.open{display:block}
+#sb-close{display:none;justify-content:flex-end;padding:8px 10px 4px}
+#sb-close button{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;width:30px;height:30px;border-radius:var(--r-sm);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center}
+#sb-close button:hover{background:rgba(255,255,255,.2)}
+@media(max-width:768px){#sb-close{display:flex}}
+
+/* ── UX SPINNER / FILTERS ── */
+.btn-spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.35);border-top-color:currentColor;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;flex-shrink:0}
+.filter-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.filter-bar input,.filter-bar select{padding:8px 12px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:13px;background:#fff;color:var(--text);outline:none;min-width:180px}
+.filter-bar input:focus,.filter-bar select:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(11,74,68,.1)}
+.char-count{font-size:11px;color:var(--muted);margin-top:4px;text-align:right}
+</style>
+</head>
+<body>
+
+<!-- ══════ LOADING ══════ -->
+<div id="sc-loading" class="screen active">
+  <div class="spinner"></div>
+  <p>Carregando portal…</p>
+</div>
+
+<!-- ══════ SETUP INICIAL ══════ -->
+<div id="sc-setup" class="screen teal-screen">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="auth-logo">LA</div>
+      <div><h1>Luís Albert Advocacia</h1><span>Configuração inicial do portal</span></div>
+    </div>
+    <h2 class="auth-title">Bem-vindo ao Portal</h2>
+    <p class="auth-sub">Esta é a primeira vez que o sistema é iniciado. Configure o acesso do administrador principal antes de começar.</p>
+    <div id="setup-alert"></div>
+    <div class="field"><label>Nome da organização</label>
+      <input type="text" id="s-org" placeholder="Ex: Luís Albert Advocacia" value="Luís Albert Advocacia"></div>
+    <div class="field"><label>Login do Admin Master</label>
+      <input type="text" id="s-user" placeholder="Ex: admin.master" autocomplete="off">
+      <div class="hint">Sem espaços ou caracteres especiais. Use pontos ou underlines.</div></div>
+    <div class="field"><label>Senha</label>
+      <input type="password" id="s-pass" placeholder="Mínimo 6 caracteres"></div>
+    <div class="field"><label>Confirmar senha</label>
+      <input type="password" id="s-pass2" placeholder="Repita a senha"></div>
+    <button class="btn btn-primary btn-full btn-lg mt-2" onclick="doSetup(this)">Criar Portal</button>
+    <div class="auth-footer">Portal de Treinamentos LAADV v2.0 · AKE/UFT-1.0</div>
+  </div>
+</div>
+
+<!-- ══════ PRIMEIRO ACESSO ══════ -->
+<div id="sc-primeiro" class="screen teal-screen">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="auth-logo">LA</div>
+      <div><h1>Luís Albert Advocacia</h1><span>Portal de Treinamentos</span></div>
+    </div>
+    <h2 class="auth-title">Defina sua senha</h2>
+    <p class="auth-sub">É o seu primeiro acesso! Por segurança, escolha uma senha pessoal para continuar.</p>
+    <div id="primeiro-alert"></div>
+    <div class="field"><label>Nova senha</label>
+      <input type="password" id="p-pass" placeholder="Mínimo 6 caracteres"></div>
+    <div class="field"><label>Confirmar nova senha</label>
+      <input type="password" id="p-pass2" placeholder="Repita a senha"></div>
+    <button class="btn btn-primary btn-full btn-lg mt-2" onclick="doPrimeiroAcesso(this)">Definir Senha e Entrar</button>
+  </div>
+</div>
+
+<!-- ══════ LOGIN ══════ -->
+<div id="sc-login" class="screen teal-screen">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="auth-logo">LA</div>
+      <div><h1>Luís Albert Advocacia</h1><span>Portal de Treinamentos</span></div>
+    </div>
+    <h2 class="auth-title">Acesse sua conta</h2>
+    <p class="auth-sub">Digite seu usuário e senha para entrar. Em caso de dúvidas, fale com o administrador.</p>
+    <div id="login-alert"></div>
+    <div class="field"><label>Usuário</label>
+      <input type="text" id="l-user" placeholder="Ex: joao.silva" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('l-pass').focus()"></div>
+    <div class="field"><label>Senha</label>
+      <input type="password" id="l-pass" placeholder="Sua senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <label class="field-checkbox mt-1 mb-2"><input type="checkbox" onchange="toggleSenha(this)"> Mostrar senha</label>
+    <button class="btn btn-primary btn-full btn-lg" onclick="doLogin(this)">Entrar no Portal</button>
+    <div class="auth-footer">Luís Albert Advocacia · Portal v2.0 · AKE/UFT-1.0<br>Problemas de acesso? Contate o administrador.</div>
+  </div>
+</div>
+
+<!-- ══════ APP ══════ -->
+<div id="sc-app" class="screen" style="flex-direction:column">
+
+  <!-- TOPBAR -->
+  <header id="topbar">
+    <button id="toggle-sb" onclick="toggleSidebar()" title="Menu">☰</button>
+    <div class="top-brand">
+      <div class="top-logo">LA</div>
+      <div><div class="top-name">Luís Albert</div><div class="top-sub">Portal de Treinamentos</div></div>
+    </div>
+    <div class="top-user">
+      <div class="top-info">
+        <strong id="top-nome">–</strong>
+        <small id="top-role-label">–</small>
+      </div>
+      <div class="top-avatar" id="top-avatar" title="Perfil" onclick="navTo('perfil')">?</div>
+      <button class="btn-sair" onclick="doLogout()">Sair</button>
+    </div>
+  </header>
+
+  <!-- BODY -->
+  <div id="sb-backdrop" onclick="fecharSidebarMobile()"></div>
+  <div id="app-body">
+    <!-- SIDEBAR -->
+    <nav id="sidebar">
+      <div id="sb-close"><button onclick="fecharSidebarMobile()" title="Fechar menu">✕</button></div>
+      <div id="nav-main"></div>
+      <div class="nav-spacer"></div>
+      <div style="padding:10px 18px;font-size:10px;color:rgba(255,255,255,.25);font-family:monospace" id="nav-ake">AKE/UFT-1.0</div>
+    </nav>
+
+    <!-- CONTENT -->
+    <main id="content">
+      <div class="loading-panel"><div class="spinner" style="width:32px;height:32px"></div> Carregando…</div>
+    </main>
+  </div>
+</div>
+
+<!-- ══════ MODAL ══════ -->
+<div id="modal-overlay" onclick="if(event.target===this)fecharModal()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2 id="modal-title">–</h2>
+      <button class="modal-close" onclick="fecharModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-foot" id="modal-foot"></div>
+  </div>
+</div>
+
+<!-- ══════ TOASTS ══════ -->
+<div id="toasts"></div>
+
+<!-- ══════ AKE BAR ══════ -->
+<div id="ake-bar">
+  <span><span class="ake-dot"></span>AKE/UFT-1.0 online</span>
+  <span id="ake-info">TC-LAADV-20250524</span>
+  <span id="ake-ts">–</span>
+</div>
+
+<script>
+/* ╔════════════════════════════════════════════════════════════════╗
+   ║          PORTAL DE TREINAMENTOS — LAADV — AKE/UFT-1.0         ║
+   ╠════════════════════════════════════════════════════════════════╣
+   ║  CONFIGURAÇÃO FIREBASE:                                        ║
+   ║  1. Acesse https://console.firebase.google.com                 ║
+   ║  2. Crie um projeto (ou use um existente)                      ║
+   ║  3. Vá em Build → Realtime Database → Criar banco de dados     ║
+   ║  4. Escolha "Iniciar no modo de teste" (ajuste as regras após) ║
+   ║  5. Clique no ícone "</>" em Visão geral do projeto            ║
+   ║  6. Copie os valores para FIREBASE_CONFIG abaixo               ║
+   ╚════════════════════════════════════════════════════════════════╝ */
+
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyCJS2ANybznsd2CV-_P0FHahM51Tz-NU6c",
+  authDomain:        "laadv-portal.firebaseapp.com",
+  databaseURL:       "https://laadv-portal-default-rtdb.firebaseio.com",
+  projectId:         "laadv-portal",
+  storageBucket:     "laadv-portal.firebasestorage.app",
+  messagingSenderId: "24953637553",
+  appId:             "1:24953637553:web:5aa46c6ea59080bd7eb090"
+};
+
+const ROOT = 'laadv_portal';  // chave raiz no Firebase
+
+/* ── ESTADO ────────────────────────────────────────────────────── */
+const S = { user: null, panel: 'inicio', subView: null };
+
+/* ── FIREBASE HELPERS ──────────────────────────────────────────── */
+let db;
+
+async function dbRead(path){
+  const snap = await db.ref(`${ROOT}/${path}`).once('value');
+  return snap.val();
+}
+async function dbSet(path, data){ await db.ref(`${ROOT}/${path}`).set(data); }
+async function dbPush(path, data){ const r = db.ref(`${ROOT}/${path}`).push(); await r.set(data); return r.key; }
+async function dbRemove(path){ await db.ref(`${ROOT}/${path}`).remove(); }
+async function dbUpdate(path, data){ await db.ref(`${ROOT}/${path}`).update(data); }
+
+/* ── CRYPTO ────────────────────────────────────────────────────── */
+async function sha256(str){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+/* ── SESSION ───────────────────────────────────────────────────── */
+function saveSession(u){ sessionStorage.setItem('_laadv', JSON.stringify(u)); }
+function clearSession(){ sessionStorage.removeItem('_laadv'); }
+function getSession(){ try{ return JSON.parse(sessionStorage.getItem('_laadv')); }catch{ return null; } }
+
+/* ── AUDIT LOG ─────────────────────────────────────────────────── */
+async function audit(acao, detalhes=''){
+  if(!S.user) return;
+  await dbPush('logs', {
+    ts: new Date().toISOString(),
+    ator_id:   S.user.uid,
+    ator_nome: S.user.nome,
+    ator_role: S.user.role,
+    acao,
+    detalhes
+  });
+  document.getElementById('ake-ts').textContent = new Date().toLocaleString('pt-BR');
+}
+
+/* ── TELAS ─────────────────────────────────────────────────────── */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id)?.classList.add('active');
+}
+
+/* ── TOAST ─────────────────────────────────────────────────────── */
+function toast(msg, tipo='info'){
+  const wrap = document.getElementById('toasts');
+  const el = document.createElement('div');
+  const cls = {ok:'toast-ok',err:'toast-err',warn:'toast-warn',info:'toast-info'};
+  const ico = {ok:'✓',err:'✕',warn:'⚠',info:'ℹ'};
+  el.className = `toast ${cls[tipo]||'toast-info'}`;
+  el.innerHTML = `<span>${ico[tipo]||'ℹ'}</span><span>${msg}</span>`;
+  wrap.appendChild(el);
+  setTimeout(()=>el.remove(), 4500);
+}
+
+/* ── MODAL ─────────────────────────────────────────────────────── */
+function abrirModal(titulo, corpo, rodape=''){
+  document.getElementById('modal-title').textContent = titulo;
+  document.getElementById('modal-body').innerHTML = corpo;
+  document.getElementById('modal-foot').innerHTML = rodape;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function fecharModal(){ document.getElementById('modal-overlay').classList.remove('open'); }
+
+function confirmar(msg, onSim){
+  abrirModal('Confirmar ação',
+    `<p style="font-size:15px;line-height:1.6">${msg}</p>`,
+    `<button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
+     <button class="btn btn-danger" onclick="fecharModal();(${onSim.toString()})()">Confirmar</button>`
+  );
+}
+
+/* ── MOBILE SIDEBAR ── */
+function fecharSidebarMobile(){
+  document.getElementById('sidebar').classList.remove('mobile-open');
+  document.getElementById('sb-backdrop')?.classList.remove('open');
+}
+
+/* ── SPINNER / LOADING ── */
+function setBtnLoading(btn, loading){
+  if(!btn) return;
+  if(loading){
+    btn.disabled = true;
+    btn.dataset.orig = btn.innerHTML;
+    btn.innerHTML = '<span class="btn-spinner"></span> Aguarde…';
+  } else {
+    btn.disabled = false;
+    btn.innerHTML = btn.dataset.orig || '';
+  }
+}
+
+/* ── UX HELPERS ── */
+function filtrarUsuarios(q){
+  const s = q.toLowerCase();
+  document.querySelectorAll('#tabela-usuarios tbody tr').forEach(tr=>{
+    tr.style.display = tr.textContent.toLowerCase().includes(s) ? '' : 'none';
+  });
+}
+
+function filtrarLogs(){
+  const q = (document.getElementById('log-search')?.value||'').toLowerCase();
+  const a = document.getElementById('log-acao')?.value||'';
+  document.querySelectorAll('#tabela-logs tbody tr').forEach(tr=>{
+    const matchQ = !q || tr.textContent.toLowerCase().includes(q);
+    const matchA = !a || tr.dataset.acao === a;
+    tr.style.display = (matchQ && matchA) ? '' : 'none';
+  });
+}
+
+function confirmarDesativar(uid, nome){
+  confirmar(`Desativar o usuário <strong>${nome}</strong>? Ele não conseguirá mais acessar o portal.`,
+    async function(){ await toggleAtivo(uid, false); }
+  );
+}
+
+function contarChars(el, countId){
+  const el2 = document.getElementById(countId);
+  if(el2) el2.textContent = `${el.value.length}/300 caracteres`;
+}
+
+/* ── SIDEBAR ───────────────────────────────────────────────────── */
+let sbCollapsed = false;
+
+function toggleSidebar(){
+  const sb = document.getElementById('sidebar');
+  const bd = document.getElementById('sb-backdrop');
+  if(window.innerWidth <= 768){
+    const opening = !sb.classList.contains('mobile-open');
+    sb.classList.toggle('mobile-open', opening);
+    bd.classList.toggle('open', opening);
+  } else {
+    sbCollapsed = !sbCollapsed;
+    sb.classList.toggle('collapsed', sbCollapsed);
+  }
+}
+
+const NAV_ITEMS = [
+  { id:'inicio',     icon:'🏠', label:'Início',            roles:['master','admin','user'] },
+  { id:'treinos',    icon:'🎓', label:'Treinamentos',       roles:['master','admin','user'] },
+  { id:'perfil',     icon:'👤', label:'Meu Perfil',         roles:['master','admin','user'] },
+  { divider:true,   label:'Gestão',                         roles:['master','admin'] },
+  { id:'usuarios',   icon:'👥', label:'Usuários',           roles:['master','admin'] },
+  { id:'conteudo',   icon:'📚', label:'Conteúdo',           roles:['master','admin'] },
+  { id:'relatorios', icon:'📋', label:'Relatórios',         roles:['master','admin'] },
+  { divider:true,   label:'Sistema',                        roles:['master'] },
+  { id:'config',     icon:'⚙️', label:'Configurações',      roles:['master'] },
+];
+
+function buildNav(){
+  const role = S.user.role;
+  let html = '';
+  NAV_ITEMS.forEach(it=>{
+    if(!it.roles.includes(role)) return;
+    if(it.divider){
+      html += `<div class="nav-divider"><span>${it.label}</span></div>`;
+    } else {
+      html += `<div class="nav-item${S.panel===it.id?' active':''}" onclick="navTo('${it.id}')">
+        <span class="nav-icon">${it.icon}</span>
+        <span class="nav-label">${it.label}</span>
+      </div>`;
+    }
+  });
+  document.getElementById('nav-main').innerHTML = html;
+}
+
+async function navTo(panel){
+  S.panel = panel; S.subView = null;
+  buildNav();
+  fecharSidebarMobile();
+  await renderPanel(panel);
+}
+
+/* ── ROLES ─────────────────────────────────────────────────────── */
+const ROLE_LABEL = { master:'Super Administrador', admin:'Administrador', user:'Participante' };
+const ROLE_BADGE = { master:'badge-gold', admin:'badge-teal', user:'badge-gray' };
+
+function podeGerenciarUsuario(alvo_role){
+  if(S.user.role === 'master') return true;
+  if(S.user.role === 'admin' && alvo_role === 'user') return true;
+  return false;
+}
+
+/* ── AUTH ──────────────────────────────────────────────────────── */
+async function doLogin(btn){
+  const usuario = document.getElementById('l-user').value.trim().toLowerCase();
+  const senha   = document.getElementById('l-pass').value;
+  const alrt    = document.getElementById('login-alert');
+  alrt.innerHTML = '';
+  if(!usuario || !senha){ alrt.innerHTML = `<div class="alert alert-err">Preencha usuário e senha.</div>`; return; }
+
+  setBtnLoading(btn, true);
+  try {
+    const snap = await db.ref(`${ROOT}/usuarios`).orderByChild('usuario').equalTo(usuario).once('value');
+    const val = snap.val();
+    if(!val){ alrt.innerHTML = `<div class="alert alert-err">Usuário não encontrado.</div>`; return; }
+
+    const uid = Object.keys(val)[0];
+    const u   = val[uid];
+    if(!u.ativo){ alrt.innerHTML = `<div class="alert alert-err">Conta desativada. Fale com o administrador.</div>`; return; }
+
+    const hash = await sha256(senha);
+    if(hash !== u.senha_hash){ alrt.innerHTML = `<div class="alert alert-err">Senha incorreta.</div>`; return; }
+
+    S.user = { uid, ...u };
+    saveSession(S.user);
+
+    if(u.primeiro_acesso){
+      showScreen('sc-primeiro');
+      return;
+    }
+
+    await iniciarApp();
+    await audit('LOGIN', 'Acesso ao portal');
+  } catch(e){
+    alrt.innerHTML = `<div class="alert alert-err">Erro ao conectar. Verifique sua conexão.</div>`;
+    console.error(e);
+  } finally {
+    setBtnLoading(btn, false);
+  }
+}
+
+async function doPrimeiroAcesso(btn){
+  const p1  = document.getElementById('p-pass').value;
+  const p2  = document.getElementById('p-pass2').value;
+  const alrt = document.getElementById('primeiro-alert');
+  alrt.innerHTML = '';
+  if(p1.length < 6){ alrt.innerHTML = `<div class="alert alert-err">A senha deve ter pelo menos 6 caracteres.</div>`; return; }
+  if(p1 !== p2){ alrt.innerHTML = `<div class="alert alert-err">As senhas não coincidem.</div>`; return; }
+  setBtnLoading(btn, true);
+  try {
+    const hash = await sha256(p1);
+    await dbUpdate(`usuarios/${S.user.uid}`, { senha_hash: hash, primeiro_acesso: false });
+    S.user.senha_hash   = hash;
+    S.user.primeiro_acesso = false;
+    saveSession(S.user);
+    await iniciarApp();
+    await audit('ALTERAR_SENHA', 'Senha definida no primeiro acesso');
+    toast('Senha definida! Bem-vindo ao portal.', 'ok');
+  } catch(e){
+    alrt.innerHTML = `<div class="alert alert-err">Erro: ${e.message}</div>`;
+  } finally {
+    setBtnLoading(btn, false);
+  }
+}
+
+async function doSetup(btn){
+  const org   = document.getElementById('s-org').value.trim();
+  const user  = document.getElementById('s-user').value.trim().toLowerCase();
+  const p1    = document.getElementById('s-pass').value;
+  const p2    = document.getElementById('s-pass2').value;
+  const alrt  = document.getElementById('setup-alert');
+  alrt.innerHTML = '';
+
+  if(!org || !user || !p1){ alrt.innerHTML = `<div class="alert alert-err">Preencha todos os campos.</div>`; return; }
+  if(!/^[a-z0-9._]+$/.test(user)){ alrt.innerHTML = `<div class="alert alert-err">O login só pode ter letras minúsculas, números, pontos e underlines.</div>`; return; }
+  if(p1.length < 6){ alrt.innerHTML = `<div class="alert alert-err">A senha deve ter pelo menos 6 caracteres.</div>`; return; }
+  if(p1 !== p2){ alrt.innerHTML = `<div class="alert alert-err">As senhas não coincidem.</div>`; return; }
+
+  setBtnLoading(btn, true);
+  try {
+    const hash = await sha256(p1);
+    const uid = await dbPush('usuarios', {
+      nome: 'Administrador Master', usuario: user, senha_hash: hash,
+      role: 'master', setor: 'Diretoria', cargo: 'Administrador',
+      ativo: true, primeiro_acesso: false,
+      criado_em: new Date().toISOString(), criado_por_nome: 'Sistema'
+    });
+    await dbSet('config', { setup_done: true, org_name: org, criado_em: new Date().toISOString() });
+    await dbPush('logs', {
+      ts: new Date().toISOString(), ator_id: uid, ator_nome: 'Sistema',
+      ator_role: 'master', acao: 'SETUP_INICIAL',
+      detalhes: `Portal configurado. Admin: ${user}`
+    });
+    S.user = { uid, nome:'Administrador Master', usuario: user, senha_hash: hash,
+      role:'master', setor:'Diretoria', cargo:'Administrador', ativo:true, primeiro_acesso:false };
+    saveSession(S.user);
+    await iniciarApp();
+    toast('Portal configurado com sucesso!', 'ok');
+  } catch(e){
+    alrt.innerHTML = `<div class="alert alert-err">Erro: ${e.message}</div>`;
+  } finally {
+    setBtnLoading(btn, false);
+  }
+}
+
+async function doLogout(){
+  await audit('LOGOUT', 'Saiu do portal');
+  clearSession();
+  S.user = null;
+  showScreen('sc-login');
+  document.getElementById('l-user').value = '';
+  document.getElementById('l-pass').value = '';
+  document.getElementById('login-alert').innerHTML = '';
+}
+
+function toggleSenha(cb){
+  document.getElementById('l-pass').type = cb.checked ? 'text' : 'password';
+}
+
+/* ── INICIAR APP ───────────────────────────────────────────────── */
+async function iniciarApp(){
+  const u = S.user;
+  showScreen('sc-app');
+  // topbar
+  document.getElementById('top-nome').textContent  = u.nome;
+  document.getElementById('top-role-label').textContent = ROLE_LABEL[u.role]||u.role;
+  document.getElementById('top-avatar').textContent = iniciais(u.nome);
+  document.getElementById('ake-info').textContent   = `TC-LAADV-20250524 · ${u.role.toUpperCase()}`;
+  document.getElementById('ake-ts').textContent     = new Date().toLocaleString('pt-BR');
+  buildNav();
+  await navTo('inicio');
+}
+
+/* ── RENDER PANEL ──────────────────────────────────────────────── */
+async function renderPanel(panel){
+  document.getElementById('content').innerHTML = `<div class="loading-panel"><div class="spinner" style="width:32px;height:32px"></div> Carregando…</div>`;
+  try {
+    const map = {
+      inicio:     renderInicio,
+      treinos:    renderTreinos,
+      perfil:     renderPerfil,
+      usuarios:   renderUsuarios,
+      conteudo:   renderConteudo,
+      relatorios: renderRelatorios,
+      config:     renderConfig,
+    };
+    await (map[panel]||renderInicio)();
+  } catch(e){
+    document.getElementById('content').innerHTML = `<div class="page-body"><div class="alert alert-err">Erro ao carregar: ${e.message}</div></div>`;
+    console.error(e);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PAINEL: INÍCIO
+   ═══════════════════════════════════════════════════════════════ */
+async function renderInicio(){
+  const u = S.user;
+  let html = `<div class="page-header"><h1>Olá, ${primeiroNome(u.nome)}! 👋</h1>
+    <p>${u.role==='user'?'Bem-vindo de volta ao seu portal de treinamentos.':'Visão geral da plataforma.'}</p></div>
+    <div class="page-body">`;
+
+  if(u.role !== 'user'){
+    const [usuarios, treinamentos, logs] = await Promise.all([
+      dbRead('usuarios'), dbRead('treinamentos'), dbRead('logs')
+    ]);
+    const nu = usuarios ? Object.values(usuarios).filter(x=>x.ativo).length : 0;
+    const nt = treinamentos ? Object.values(treinamentos).filter(x=>x.ativo).length : 0;
+    const nl = logs ? Object.keys(logs).length : 0;
+    const na = usuarios ? Object.values(usuarios).filter(x=>x.role==='admin'||x.role==='master').length : 0;
+
+    html += `<div class="grid-4 mb-3">
+      <div class="stat-card"><div class="stat-icon" style="background:var(--teal-light)">👥</div>
+        <div><div class="stat-val">${nu}</div><div class="stat-lbl">Participantes ativos</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:var(--gold-light)">🎓</div>
+        <div><div class="stat-val">${nt}</div><div class="stat-lbl">Treinamentos ativos</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:var(--success-bg)">👤</div>
+        <div><div class="stat-val">${na}</div><div class="stat-lbl">Administradores</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:var(--teal-light)">📋</div>
+        <div><div class="stat-val">${nl}</div><div class="stat-lbl">Registros de log</div></div></div>
+    </div>`;
+
+    // Últimos logs
+    if(logs){
+      const ultimos = Object.values(logs).sort((a,b)=>b.ts.localeCompare(a.ts)).slice(0,5);
+      html += `<p class="section-label">Atividade recente</p>
+        <div class="card"><div class="tbl-wrap"><table>
+          <thead><tr><th>Quando</th><th>Usuário</th><th>Ação</th><th>Detalhes</th></tr></thead><tbody>
+          ${ultimos.map(l=>`<tr>
+            <td class="text-sm text-muted">${fmtTs(l.ts)}</td>
+            <td>${l.ator_nome} <span class="badge ${ROLE_BADGE[l.ator_role]||'badge-gray'} text-sm">${ROLE_LABEL[l.ator_role]||l.ator_role}</span></td>
+            <td>${fmtAcao(l.acao)}</td>
+            <td class="text-sm text-muted">${l.detalhes||'–'}</td>
+          </tr>`).join('')}
+          </tbody></table></div></div>`;
+    } else {
+      html += `<div class="empty-state"><div class="empty-icon">📋</div><h3>Nenhum registro ainda</h3><p>As atividades aparecerão aqui.</p></div>`;
+    }
+  } else {
+    // User dashboard — progresso
+    const [treins, concs] = await Promise.all([dbRead('treinamentos'), dbRead(`conclusoes/${u.uid}`)]);
+    const todos   = treins  ? Object.entries(treins).filter(([,t])=>t.ativo) : [];
+    const concMap = concs || {};
+    const done    = todos.filter(([id])=>concMap[id]).length;
+    const pct     = todos.length ? Math.round((done/todos.length)*100) : 0;
+
+    html += `<div class="progress-big">
+      <div class="flex justify-between items-center mb-2">
+        <div><h2 style="font-size:20px">Seu progresso</h2><p class="text-sm text-muted">${done} de ${todos.length} treinamentos concluídos</p></div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:700;color:var(--teal)">${pct}%</div>
+      </div>
+      <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
+    </div>
+    <p class="section-label">Treinamentos disponíveis</p>
+    <div class="grid-3">
+      ${todos.map(([tid,t])=>{
+        const feito = !!concMap[tid];
+        const nvids = t.videos ? Object.keys(t.videos).length : 0;
+        return `<div class="training-card" onclick="navTo('treinos');setTimeout(()=>verTreinamento('${tid}'),200)">
+          <div class="tc-header"><h3>${t.titulo}</h3><p>${t.descricao||''}</p></div>
+          <div class="tc-body">
+            <div class="tc-meta"><span>📹 ${nvids} vídeo${nvids!==1?'s':''}</span>
+              ${feito?`<span class="badge badge-green">✓ Concluído</span>`:`<span class="badge badge-gray">Pendente</span>`}
+            </div>
+            <div class="tc-progress"><div class="tc-fill" style="width:${feito?100:0}%"></div></div>
+          </div>
+        </div>`;
+      }).join('')||`<div class="empty-state"><div class="empty-icon">🎓</div><h3>Nenhum treinamento disponível</h3><p>Fique atento a novos conteúdos.</p></div>`}
+    </div>`;
+  }
+
+  html += `</div>`;
+  document.getElementById('content').innerHTML = html;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PAINEL: TREINAMENTOS (user view)
+   ═══════════════════════════════════════════════════════════════ */
+async function renderTreinos(){
+  if(S.subView){ await renderTreinamentoDetalhe(S.subView); return; }
+  const [treins, concs] = await Promise.all([dbRead('treinamentos'), dbRead(`conclusoes/${S.user.uid}`)]);
+  const todos   = treins ? Object.entries(treins).filter(([,t])=>t.ativo) : [];
+  const concMap = concs || {};
+
+  let html = `<div class="page-header"><h1>🎓 Treinamentos</h1><p>Acesse os conteúdos disponíveis para você.</p></div>
+    <div class="page-body">`;
+
+  if(!todos.length){
+    html += `<div class="empty-state"><div class="empty-icon">🎓</div><h3>Nenhum treinamento disponível</h3><p>O administrador adicionará conteúdos em breve.</p></div>`;
+  } else {
+    html += `<div class="grid-2">` + todos.map(([tid,t])=>{
+      const feito = !!concMap[tid];
+      const nvids = t.videos ? Object.keys(t.videos).length : 0;
+      return `<div class="training-card" onclick="verTreinamento('${tid}')">
+        <div class="tc-header"><h3>${t.titulo}</h3><p>${t.descricao||''}</p></div>
+        <div class="tc-body">
+          <div class="tc-meta"><span>📹 ${nvids} vídeo${nvids!==1?'s':''}</span>
+            ${feito?`<span class="badge badge-green">✓ Concluído</span>`:`<span class="badge badge-gray">Em andamento</span>`}
+          </div>
+          <div class="tc-progress"><div class="tc-fill" style="width:${feito?100:0}%"></div></div>
+        </div>
+      </div>`;
+    }).join('') + `</div>`;
+  }
+
+  html += `</div>`;
+  document.getElementById('content').innerHTML = html;
+}
+
+async function verTreinamento(tid){
+  S.subView = tid;
+  await renderTreinamentoDetalhe(tid);
+}
+
+async function renderTreinamentoDetalhe(tid){
+  const [t, concs] = await Promise.all([dbRead(`treinamentos/${tid}`), dbRead(`conclusoes/${S.user.uid}`)]);
+  if(!t){ toast('Treinamento não encontrado.','err'); await navTo('treinos'); return; }
+  const concMap = concs || {};
+  const feito   = !!concMap[tid];
+  const videos  = t.videos ? Object.entries(t.videos) : [];
+  const vidAtual = videos.length ? videos[0] : null;
+
+  let html = `<div class="page-header">
+    <div class="flex items-center gap-md">
+      <button class="btn btn-ghost btn-sm" onclick="S.subView=null;renderTreinos()" style="background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff">← Voltar</button>
+      <div><h1>${t.titulo}</h1><p>${t.descricao||''}</p></div>
+    </div>
+  </div>
+  <div class="page-body" id="detalhe-body">
+    <div class="flex gap-md" style="flex-wrap:wrap;align-items:flex-start">
+      <div style="flex:1;min-width:280px">
+        <div id="player-box">
+          ${vidAtual ? ytEmbed(vidAtual[1].url, vidAtual[1].titulo) : '<p class="text-muted">Nenhum vídeo neste treinamento.</p>'}
+        </div>
+        <div id="video-title" style="font-size:15px;font-weight:600;margin:10px 0 4px">${vidAtual?vidAtual[1].titulo:''}</div>
+        <div id="video-dur" class="text-sm text-muted">${vidAtual&&vidAtual[1].duracao?'⏱ '+vidAtual[1].duracao:''}</div>
+      </div>
+      <div style="width:280px;flex-shrink:0">
+        <p class="section-label">Vídeos do treinamento</p>
+        <div class="video-list">
+          ${videos.map(([vid,v],i)=>`
+            <div class="video-item${i===0?' active':''}" id="vi-${vid}" onclick="selecionarVideo('${tid}','${vid}',${i})">
+              <div class="vi-num">${i+1}</div>
+              <div class="vi-info">
+                <div class="vi-title">${v.titulo}</div>
+                ${v.duracao?`<div class="vi-dur">⏱ ${v.duracao}</div>`:''}
+              </div>
+            </div>`).join('')||'<p class="text-sm text-muted">Nenhum vídeo cadastrado.</p>'}
+        </div>
+        ${!feito && videos.length ? `
+          <button class="btn btn-success btn-full" onclick="marcarConcluido('${tid}')">
+            ✓ Marcar treinamento como concluído
+          </button>` : feito ? `<div class="badge badge-green" style="width:100%;justify-content:center;padding:10px">✓ Treinamento concluído!</div>` : ''}
+      </div>
+    </div>
+  </div>`;
+
+  document.getElementById('content').innerHTML = html;
+  window._treinsVideos = Object.fromEntries(videos);
+}
+
+async function selecionarVideo(tid, vid, idx){
+  const v = window._treinsVideos?.[vid];
+  if(!v) return;
+  document.getElementById('player-box').innerHTML   = ytEmbed(v.url, v.titulo);
+  document.getElementById('video-title').textContent = v.titulo;
+  document.getElementById('video-dur').textContent   = v.duracao ? '⏱ ' + v.duracao : '';
+  document.querySelectorAll('.video-item').forEach(el=>el.classList.remove('active'));
+  document.getElementById(`vi-${vid}`)?.classList.add('active');
+}
+
+async function marcarConcluido(tid){
+  await dbSet(`conclusoes/${S.user.uid}/${tid}`, new Date().toISOString());
+  await audit('CONCLUIR_TREINAMENTO', `Concluiu: ${tid}`);
+  toast('Parabéns! Treinamento marcado como concluído. 🎉','ok');
+  await renderTreinamentoDetalhe(tid);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PAINEL: MEU PERFIL
+   ═══════════════════════════════════════════════════════════════ */
+async function renderPerfil(){
+  const u = S.user;
+  document.getElementById('content').innerHTML = `
+    <div class="page-header"><h1>👤 Meu Perfil</h1><p>Visualize e atualize suas informações pessoais.</p></div>
+    <div class="page-body">
+      <div class="grid-2">
+        <div class="card card-pad">
+          <div style="text-align:center;margin-bottom:20px">
+            <div class="perfil-avatar-big" style="margin:0 auto">${iniciais(u.nome)}</div>
+            <h2 style="font-size:22px;margin-bottom:4px">${u.nome}</h2>
+            <span class="badge ${ROLE_BADGE[u.role]||'badge-gray'}">${ROLE_LABEL[u.role]||u.role}</span>
+          </div>
+          <div id="perfil-alert"></div>
+          <div class="field"><label>Nome completo</label>
+            <input type="text" id="pf-nome" value="${esc(u.nome)}"></div>
+          <div class="field"><label>Setor / Departamento</label>
+            <input type="text" id="pf-setor" value="${esc(u.setor||'')}" placeholder="Ex: Jurídico, Financeiro…"></div>
+          <div class="field"><label>Cargo</label>
+            <input type="text" id="pf-cargo" value="${esc(u.cargo||'')}" placeholder="Ex: Advogado, Analista…"></div>
+          <button class="btn btn-primary btn-full" onclick="salvarPerfil(this)">Salvar informações</button>
+        </div>
+        <div class="card card-pad">
+          <h3 style="margin-bottom:18px;color:var(--teal)">Alterar Senha</h3>
+          <div id="senha-alert"></div>
+          <div class="field"><label>Senha atual</label>
+            <input type="password" id="pf-atual" placeholder="Digite sua senha atual"></div>
+          <div class="field"><label>Nova senha</label>
+            <input type="password" id="pf-nova" placeholder="Mínimo 6 caracteres"></div>
+          <div class="field"><label>Confirmar nova senha</label>
+            <input type="password" id="pf-nova2" placeholder="Repita a nova senha"></div>
+          <button class="btn btn-ghost btn-full" onclick="alterarSenha(this)">Alterar senha</button>
+          <div class="divider"></div>
+          <p class="text-sm text-muted"><strong>Login:</strong> ${esc(u.usuario)}</p>
+          <p class="text-sm text-muted mt-1"><strong>Membro desde:</strong> ${u.criado_em ? fmtData(u.criado_em) : '–'}</p>
+        </div>
+      </div>
+    </div>`;
+}
+
+async function salvarPerfil(btn){
+  const nome  = document.getElementById('pf-nome').value.trim();
+  const setor = document.getElementById('pf-setor').value.trim();
+  const cargo = document.getElementById('pf-cargo').value.trim();
+  const alrt  = document.getElementById('perfil-alert');
+  if(!nome){ alrt.innerHTML=`<div class="alert alert-err">O nome não pode ser vazio.</div>`; return; }
+  setBtnLoading(btn, true);
+  try {
+    await dbUpdate(`usuarios/${S.user.uid}`, { nome, setor, cargo });
+    S.user.nome = nome; S.user.setor = setor; S.user.cargo = cargo;
+    saveSession(S.user);
+    document.getElementById('top-nome').textContent = nome;
+    document.getElementById('top-avatar').textContent = iniciais(nome);
+    await audit('EDITAR_PERFIL', `Nome: ${nome}, Setor: ${setor}, Cargo: ${cargo}`);
+    alrt.innerHTML = `<div class="alert alert-ok">Informações salvas com sucesso!</div>`;
+    toast('Perfil atualizado!','ok');
+  } catch(e){
+    alrt.innerHTML = `<div class="alert alert-err">Erro ao salvar: ${e.message}</div>`;
+  } finally {
+    setBtnLoading(btn, false);
+  }
+}
+
+async function alterarSenha(btn){
+  const atual  = document.getElementById('pf-atual').value;
+  const nova   = document.getElementById('pf-nova').value;
+  const nova2  = document.getElementById('pf-nova2').value;
+  const alrt   = document.getElementById('senha-alert');
+  alrt.innerHTML = '';
+  const hashAtual = await sha256(atual);
+  if(hashAtual !== S.user.senha_hash){ alrt.innerHTML=`<div class="alert alert-err">Senha atual incorreta.</div>`; return; }
+  if(nova.length < 6){ alrt.innerHTML=`<div class="alert alert-err">A nova senha deve ter pelo menos 6 caracteres.</div>`; return; }
+  if(nova !== nova2){ alrt.innerHTML=`<div class="alert alert-err">As senhas não coincidem.</div>`; return; }
+  setBtnLoading(btn, true);
+  try {
+    const novoHash = await sha256(nova);
+    await dbUpdate(`usuarios/${S.user.uid}`, { senha_hash: novoHash });
+    S.user.senha_hash = novoHash; saveSession(S.user);
+    await audit('ALTERAR_SENHA', 'Senha alterada pelo próprio usuário');
+    alrt.innerHTML = `<div class="alert alert-ok">Senha alterada com sucesso!</div>`;
+    document.getElementById('pf-atual').value = '';
+    document.getElementById('pf-nova').value  = '';
+    document.getElementById('pf-nova2').value = '';
+    toast('Senha alterada!','ok');
+  } catch(e){
+    alrt.innerHTML = `<div class="alert alert-err">Erro ao salvar: ${e.message}</div>`;
+  } finally {
+    setBtnLoading(btn, false);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PAINEL: USUÁRIOS (admin+)
+   ═══════════════════════════════════════════════════════════════ */
+async function renderUsuarios(){
+  const data = await dbRead('usuarios');
+  const lista = data ? Object.entries(data).sort((a,b)=>a[1].nome.localeCompare(b[1].nome)) : [];
+
+  let rows = lista.map(([uid, u])=>{
+    const pode = podeGerenciarUsuario(u.role);
+    const isSelf = uid === S.user.uid;
+    return `<tr>
+      <td>
+        <div class="flex items-center gap-sm">
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--teal-light);color:var(--teal);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0">${iniciais(u.nome)}</div>
+          <div><div style="font-weight:500">${esc(u.nome)}</div><div class="text-sm text-muted">${esc(u.usuario)}</div></div>
+        </div>
+      </td>
+      <td>${esc(u.setor||'–')}</td>
+      <td>${esc(u.cargo||'–')}</td>
+      <td><span class="badge ${ROLE_BADGE[u.role]||'badge-gray'}">${ROLE_LABEL[u.role]||u.role}</span></td>
+      <td><span class="badge ${u.ativo?'badge-green':'badge-red'}">${u.ativo?'Ativo':'Inativo'}</span></td>
+      <td>
+        <div class="td-actions">
+          ${pode&&!isSelf ? `<button class="btn btn-ghost btn-sm" onclick="abrirFormUsuario('${uid}')">Editar</button>` : ''}
+          ${pode&&!isSelf&&u.ativo ? `<button class="btn btn-ghost btn-sm" onclick="confirmarDesativar('${uid}','${esc(u.nome)}')">Desativar</button>` : ''}
+          ${pode&&!isSelf&&!u.ativo ? `<button class="btn btn-success btn-sm" onclick="toggleAtivo('${uid}',true)">Ativar</button>` : ''}
+          ${S.user.role==='master'&&!isSelf ? `<button class="btn btn-danger btn-sm" onclick="deletarUsuario('${uid}','${esc(u.nome)}')">Excluir</button>` : ''}
+          ${isSelf ? `<span class="text-sm text-muted">Você</span>` : ''}
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('content').innerHTML = `
+    <div class="page-header">
+      <div class="flex justify-between items-center">
+        <div><h1>👥 Usuários</h1><p>Gerencie os participantes e administradores do portal.</p></div>
+        <button class="btn btn-gold" onclick="abrirFormUsuario()">+ Novo Usuário</button>
+      </div>
+    </div>
+    <div class="page-body">
+      ${!lista.length ? `<div class="empty-state"><div class="empty-icon">👥</div><h3>Nenhum usuário cadastrado</h3></div>` : `
+      <div class="filter-bar">
+        <input type="text" id="user-search" placeholder="Buscar por nome ou setor…" oninput="filtrarUsuarios(this.value)">
+      </div>
+      <div class="card"><div class="tbl-wrap"><table id="tabela-usuarios">
+        <thead><tr><th>Nome / Login</th><th>Setor</th><th>Cargo</th><th>Perfil</th><th>Status</th><th>Ações</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div></div>`}
+    </div>`;
+}
+
+function abrirFormUsuario(uid=null){
+  dbRead(uid ? `usuarios/${uid}` : null).then(u=>{
+    const edit = !!uid;
+    const roleOptions = [
+      { v:'user',   l:'Participante' },
+      { v:'admin',  l:'Administrador' },
+      ...(S.user.role==='master' ? [{ v:'master', l:'Super Administrador' }] : []),
+    ].map(o=>`<option value="${o.v}"${u&&u.role===o.v?' selected':''}>${o.l}</option>`).join('');
+
+    const corpo = `
+      <div id="uform-alert"></div>
+      <div class="field"><label>Nome completo</label>
+        <input type="text" id="uf-nome" value="${esc(u?.nome||'')}" placeholder="Ex: João da Silva"></div>
+      <div class="input-row">
+        <div class="field"><label>Login (usuário)</label>
+          <input type="text" id="uf-user" value="${esc(u?.usuario||'')}" placeholder="Ex: joao.silva" ${edit?'readonly style="background:var(--bg)"':''}></div>
+        <div class="field"><label>Perfil de acesso</label>
+          <select id="uf-role">${roleOptions}</select></div>
+      </div>
+      <div class="input-row">
+        <div class="field"><label>Setor</label>
+          <input type="text" id="uf-setor" value="${esc(u?.setor||'')}" placeholder="Ex: Jurídico"></div>
+        <div class="field"><label>Cargo</label>
+          <input type="text" id="uf-cargo" value="${esc(u?.cargo||'')}" placeholder="Ex: Advogado"></div>
+      </div>
+      ${!edit ? `<div class="field"><label>Senha inicial</label>
+        <input type="text" id="uf-pass" placeholder="O usuário precisará trocar no 1º acesso">
+        <div class="hint">O sistema pedirá para trocar a senha no primeiro login.</div></div>` :
+        `<div class="alert alert-warn">Para redefinir a senha do usuário, use o botão "Redefinir Senha" abaixo.</div>
+         <input type="hidden" id="uf-uid" value="${uid}">
+         <input type="hidden" id="uf-pass" value="">`}`;
+
+    const rodape = `
+      <button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
+      ${edit && S.user.role==='master' ? `<button class="btn btn-ghost" onclick="resetarSenha('${uid}')">Redefinir Senha</button>` : ''}
+      <button class="btn btn-primary" onclick="salvarUsuario(${edit?`'${uid}'`:'null'},this)">${edit?'Salvar alterações':'Criar Usuário'}</button>`;
+
+    abrirModal(edit?'Editar Usuário':'Novo Usuário', corpo, rodape);
+  });
+}
+
+async function salvarUsuario(uid=null, btn=null){
+  const nome  = document.getElementById('uf-nome').value.trim();
+  const user  = document.getElementById('uf-user').value.trim().toLowerCase();
+  const role  = document.getElementById('uf-role').value;
+  const setor = document.getElementById('uf-setor').value.trim();
+  const cargo = document.getElementById('uf-cargo').value.trim();
+  const passEl= document.getElementById('uf-pass');
+  const alrt  = document.getElementById('uform-alert');
+  alrt.innerHTML = '';
+
+  if(!nome){ alrt.innerHTML=`<div class="alert alert-err">O nome é obrigatório.</div>`; return; }
+  if(!uid && !user){ alrt.innerHTML=`<div class="alert alert-err">O login é obrigatório.</div>`; return; }
+  if(!uid && !/^[a-z0-9._]+$/.test(user)){ alrt.innerHTML=`<div class="alert alert-err">Login inválido. Use letras minúsculas, números, pontos ou underlines.</div>`; return; }
+  if(!uid && (!passEl.value || passEl.value.length < 6)){ alrt.innerHTML=`<div class="alert alert-err">Informe uma senha inicial de pelo menos 6 caracteres.</div>`; return; }
+
+  setBtnLoading(btn, true);
+  try {
+    if(uid){
+      await dbUpdate(`usuarios/${uid}`, { nome, role, setor, cargo });
+      await audit('EDITAR_USUARIO', `Editou: ${nome} (${user}) → perfil: ${role}`);
+      toast(`Usuário "${nome}" atualizado.`,'ok');
+    } else {
+      const snap = await db.ref(`${ROOT}/usuarios`).orderByChild('usuario').equalTo(user).once('value');
+      if(snap.val()){ alrt.innerHTML=`<div class="alert alert-err">Este login já está em uso.</div>`; return; }
+      const hash = await sha256(passEl.value);
+      const novo = { nome, usuario:user, senha_hash:hash, role, setor, cargo, ativo:true, primeiro_acesso:true,
+        criado_em:new Date().toISOString(), criado_por_nome:S.user.nome };
+      await dbPush('usuarios', novo);
+      await audit('CRIAR_USUARIO', `Criou: ${nome} (${user}), perfil: ${role}`);
+      toast(`Usuário "${nome}" criado! Login: ${user}`, 'ok');
+    }
+    fecharModal();
+    await renderUsuarios();
+  } catch(e){
+    alrt.innerHTML=`<div class="alert alert-err">Erro: ${e.message}</div>`;
+  } finally {
+    setBtnLoading(btn, false);
+  }
+}
+
+async function toggleAtivo(uid, ativo){
+  await dbUpdate(`usuarios/${uid}`, { ativo });
+  await audit(ativo?'ATIVAR_USUARIO':'DESATIVAR_USUARIO', `UID: ${uid}`);
+  toast(ativo?'Usuário ativado.':'Usuário desativado.','ok');
+  await renderUsuarios();
+}
+
+function deletarUsuario(uid, nome){
+  confirmar(`Tem certeza que deseja excluir permanentemente o usuário <strong>${nome}</strong>? Esta ação não pode ser desfeita.`,
+    async function(){
+      await dbRemove(`usuarios/${uid}`);
+      await dbRemove(`conclusoes/${uid}`);
+      await audit('DELETAR_USUARIO', `Excluiu: ${nome} (${uid})`);
+      toast(`Usuário "${nome}" excluído.`,'ok');
+      await renderUsuarios();
+    }
+  );
+}
+
+function resetarSenha(uid){
+  const corpo = `
+    <p class="mb-2">Defina uma nova senha temporária para este usuário. Ele será obrigado a trocar no próximo login.</p>
+    <div id="reset-alert"></div>
+    <div class="field"><label>Nova senha temporária</label>
+      <input type="text" id="r-pass" placeholder="Mínimo 6 caracteres"></div>`;
+  abrirModal('Redefinir Senha', corpo,
+    `<button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
+     <button class="btn btn-primary" onclick="confirmarResetSenha('${uid}')">Redefinir</button>`);
+}
+
+async function confirmarResetSenha(uid){
+  const p = document.getElementById('r-pass').value;
+  const alrt = document.getElementById('reset-alert');
+  if(p.length < 6){ alrt.innerHTML=`<div class="alert alert-err">Mínimo 6 caracteres.</div>`; return; }
+  const hash = await sha256(p);
+  await dbUpdate(`usuarios/${uid}`, { senha_hash: hash, primeiro_acesso: true });
+  await audit('RESETAR_SENHA', `Redefiniu senha do UID: ${uid}`);
+  fecharModal();
+  toast('Senha redefinida. O usuário precisará trocar no próximo acesso.','ok');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PAINEL: CONTEÚDO / TREINAMENTOS ADMIN
+   ═══════════════════════════════════════════════════════════════ */
+async function renderConteudo(){
+  const data = await dbRead('treinamentos');
+  const lista = data ? Object.entries(data).sort((a,b)=>(a[1].ordem||0)-(b[1].ordem||0)) : [];
+
+  let rows = lista.map(([tid,t])=>{
+    const nvids = t.videos ? Object.keys(t.videos).length : 0;
+    return `<tr>
+      <td><div style="font-weight:500">${esc(t.titulo)}</div><div class="text-sm text-muted">${esc(t.descricao||'')}</div></td>
+      <td>${nvids} vídeo${nvids!==1?'s':''}</td>
+      <td><span class="badge ${t.ativo?'badge-green':'badge-red'}">${t.ativo?'Ativo':'Inativo'}</span></td>
+      <td><div class="td-actions">
+        <button class="btn btn-ghost btn-sm" onclick="abrirFormTrein('${tid}')">Editar</button>
+        <button class="btn btn-ghost btn-sm" onclick="abrirGerenciarVideos('${tid}')">📹 Vídeos</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleAtivoTrein('${tid}',${!t.ativo})">${t.ativo?'Desativar':'Ativar'}</button>
+        ${S.user.role==='master'?`<button class="btn btn-danger btn-sm" onclick="deletarTrein('${tid}','${esc(t.titulo)}')">Excluir</button>`:''}
+      </div></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('content').innerHTML = `
+    <div class="page-header">
+      <div class="flex justify-between items-center">
+        <div><h1>📚 Conteúdo</h1><p>Gerencie os treinamentos e vídeos da plataforma.</p></div>
+        <button class="btn btn-gold" onclick="abrirFormTrein()">+ Novo Treinamento</button>
+      </div>
+    </div>
+    <div class="page-body">
+      ${!lista.length ? `<div class="empty-state"><div class="empty-icon">📚</div><h3>Nenhum treinamento cadastrado</h3><p>Clique em "+ Novo Treinamento" para começar.</p></div>` : `
+      <div class="card"><div class="tbl-wrap"><table>
+        <thead><tr><th>Treinamento</th><th>Vídeos</th><th>Status</th><th>Ações</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div></div>`}
+    </div>`;
+}
+
+function abrirFormTrein(tid=null){
+  dbRead(tid?`treinamentos/${tid}`:null).then(t=>{
+    abrirModal(tid?'Editar Treinamento':'Novo Treinamento',
+      `<div id="tf-alert"></div>
+       <div class="field"><label>Título do treinamento</label>
+         <input type="text" id="tf-titulo" value="${esc(t?.titulo||'')}" placeholder="Ex: Integração e Onboarding"></div>
+       <div class="field"><label>Descrição</label>
+         <textarea id="tf-desc" rows="3" maxlength="300" placeholder="Descreva o objetivo deste treinamento…" oninput="contarChars(this,'tf-desc-count')">${esc(t?.descricao||'')}</textarea>
+         <div class="char-count" id="tf-desc-count">${(t?.descricao||'').length}/300 caracteres</div></div>
+       <div class="field"><label>Ordem de exibição</label>
+         <input type="number" id="tf-ordem" value="${t?.ordem||1}" min="1" style="width:80px"></div>`,
+      `<button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
+       <button class="btn btn-primary" onclick="salvarTrein(${tid?`'${tid}'`:'null'},this)">${tid?'Salvar':'Criar'}</button>`
+    );
+  });
+}
+
+async function salvarTrein(tid=null, btn=null){
+  const titulo = document.getElementById('tf-titulo').value.trim();
+  const desc   = document.getElementById('tf-desc').value.trim();
+  const ordem  = parseInt(document.getElementById('tf-ordem').value)||1;
+  const alrt   = document.getElementById('tf-alert');
+  if(!titulo){ alrt.innerHTML=`<div class="alert alert-err">O título é obrigatório.</div>`; return; }
+  setBtnLoading(btn, true);
+  try {
+    if(tid){
+      await dbUpdate(`treinamentos/${tid}`, { titulo, descricao:desc, ordem });
+      await audit('EDITAR_TREINAMENTO', `Editou: "${titulo}"`);
+      toast('Treinamento atualizado.','ok');
+    } else {
+      await dbPush('treinamentos', { titulo, descricao:desc, ordem, ativo:true, criado_em:new Date().toISOString(), criado_por:S.user.uid });
+      await audit('CRIAR_TREINAMENTO', `Criou: "${titulo}"`);
+      toast(`Treinamento "${titulo}" criado!`,'ok');
+    }
+    fecharModal();
+    await renderConteudo();
+  } catch(e){
+    alrt.innerHTML=`<div class="alert alert-err">Erro: ${e.message}</div>`;
+  } finally {
+    setBtnLoading(btn, false);
+  }
+}
+
+async function toggleAtivoTrein(tid, ativo){
+  await dbUpdate(`treinamentos/${tid}`, { ativo });
+  await audit(ativo?'ATIVAR_TREINAMENTO':'DESATIVAR_TREINAMENTO', `TID: ${tid}`);
+  toast(ativo?'Treinamento ativado.':'Treinamento desativado.','ok');
+  await renderConteudo();
+}
+
+function deletarTrein(tid, titulo){
+  confirmar(`Excluir o treinamento <strong>${titulo}</strong>? Todos os vídeos e registros de conclusão serão removidos.`,
+    async function(){
+      await dbRemove(`treinamentos/${tid}`);
+      await audit('DELETAR_TREINAMENTO', `Excluiu: "${titulo}"`);
+      toast(`Treinamento excluído.`,'ok');
+      await renderConteudo();
+    }
+  );
+}
+
+async function abrirGerenciarVideos(tid){
+  const t = await dbRead(`treinamentos/${tid}`);
+  if(!t) return;
+  const videos = t.videos ? Object.entries(t.videos) : [];
+
+  const listaHtml = videos.map(([vid,v],i)=>`
+    <div class="flex items-center gap-sm" style="padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="width:26px;height:26px;border-radius:50%;background:var(--teal);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">${i+1}</div>
+      <div style="flex:1">
+        <div style="font-weight:500;font-size:14px">${esc(v.titulo)}</div>
+        ${v.duracao?`<div class="text-sm text-muted">⏱ ${v.duracao}</div>`:''}
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="deletarVideo('${tid}','${vid}','${esc(t.titulo)}')">✕</button>
+    </div>`).join('') || `<p class="text-sm text-muted" style="padding:12px 0">Nenhum vídeo cadastrado ainda.</p>`;
+
+  abrirModal(`Vídeos: ${t.titulo}`,
+    `<p class="text-sm text-muted mb-2">Cole URLs do YouTube. O sistema cria o player automaticamente.</p>
+     ${listaHtml}
+     <div class="divider"></div>
+     <p class="section-label">Adicionar vídeo</p>
+     <div id="vf-alert"></div>
+     <div class="field"><label>Título do vídeo</label>
+       <input type="text" id="vf-titulo" placeholder="Ex: Aula 1 — Introdução"></div>
+     <div class="field"><label>Link do YouTube</label>
+       <input type="text" id="vf-url" placeholder="https://youtube.com/watch?v=..."></div>
+     <div class="field"><label>Duração (opcional)</label>
+       <input type="text" id="vf-dur" placeholder="Ex: 15 min"></div>`,
+    `<button class="btn btn-ghost" onclick="fecharModal()">Fechar</button>
+     <button class="btn btn-primary" onclick="adicionarVideo('${tid}',this)">+ Adicionar Vídeo</button>`
+  );
+}
+
+async function adicionarVideo(tid, btn=null){
+  const titulo = document.getElementById('vf-titulo').value.trim();
+  const url    = document.getElementById('vf-url').value.trim();
+  const dur    = document.getElementById('vf-dur').value.trim();
+  const alrt   = document.getElementById('vf-alert');
+  if(!titulo||!url){ alrt.innerHTML=`<div class="alert alert-err">Preencha título e link do vídeo.</div>`; return; }
+  if(!extrairYtId(url) && !url.startsWith('http')){ alrt.innerHTML=`<div class="alert alert-err">Link inválido. Use um link do YouTube ou URL de vídeo.</div>`; return; }
+  setBtnLoading(btn, true);
+  try {
+    await dbPush(`treinamentos/${tid}/videos`, { titulo, url, duracao:dur, criado_em:new Date().toISOString() });
+    await audit('ADICIONAR_VIDEO', `Adicionou vídeo "${titulo}" ao treinamento ${tid}`);
+    toast('Vídeo adicionado!','ok');
+    fecharModal();
+    await abrirGerenciarVideos(tid);
+  } catch(e){
+    alrt.innerHTML=`<div class="alert alert-err">Erro: ${e.message}</div>`;
+  } finally {
+    setBtnLoading(btn, false);
+  }
+}
+
+function deletarVideo(tid, vid, tituloTrein){
+  confirmar(`Remover este vídeo do treinamento <strong>${tituloTrein}</strong>?`,
+    async function(){
+      await dbRemove(`treinamentos/${tid}/videos/${vid}`);
+      await audit('REMOVER_VIDEO', `Removeu vídeo ${vid} do treinamento ${tid}`);
+      toast('Vídeo removido.','ok');
+      fecharModal();
+      await abrirGerenciarVideos(tid);
+    }
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PAINEL: RELATÓRIOS / LOGS
+   ═══════════════════════════════════════════════════════════════ */
+async function renderRelatorios(){
+  const data = await dbRead('logs');
+  const todos = data ? Object.values(data).sort((a,b)=>b.ts.localeCompare(a.ts)) : [];
+
+  // Filtro: admins veem só suas ações e as dos users; master vê tudo
+  const lista = S.user.role === 'master' ? todos :
+    todos.filter(l => l.ator_id === S.user.uid || l.ator_role === 'user');
+
+  const acoes = [...new Set(lista.map(l=>l.acao))].sort();
+  const rows = lista.slice(0,200).map(l=>`<tr data-acao="${l.acao}">
+    <td class="text-sm">${fmtTs(l.ts)}</td>
+    <td>${esc(l.ator_nome)}</td>
+    <td><span class="badge ${ROLE_BADGE[l.ator_role]||'badge-gray'} text-sm">${ROLE_LABEL[l.ator_role]||l.ator_role}</span></td>
+    <td><span class="badge badge-teal text-sm">${fmtAcao(l.acao)}</span></td>
+    <td class="text-sm text-muted">${esc(l.detalhes||'–')}</td>
+  </tr>`).join('');
+
+  document.getElementById('content').innerHTML = `
+    <div class="page-header"><h1>📋 Relatórios e Logs</h1><p>Histórico auditável de todas as ações realizadas no portal.</p></div>
+    <div class="page-body">
+      <div class="filter-bar">
+        <input type="text" id="log-search" placeholder="Buscar por usuário…" oninput="filtrarLogs()">
+        <select id="log-acao" onchange="filtrarLogs()">
+          <option value="">Todas as ações</option>
+          ${acoes.map(a=>`<option value="${a}">${fmtAcao(a)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="flex justify-between items-center mb-2">
+        <p class="section-label" style="margin:0">${lista.length} registros</p>
+        <button class="btn btn-ghost btn-sm" onclick="exportarLogs()">⬇ Exportar CSV</button>
+      </div>
+      ${!lista.length ? `<div class="empty-state"><div class="empty-icon">📋</div><h3>Nenhum registro encontrado</h3></div>` : `
+      <div class="card"><div class="tbl-wrap"><table id="tabela-logs">
+        <thead><tr><th>Data/Hora</th><th>Usuário</th><th>Perfil</th><th>Ação</th><th>Detalhes</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div></div>`}
+    </div>`;
+
+  window._logsData = lista;
+}
+
+function exportarLogs(){
+  if(!window._logsData?.length){ toast('Nenhum dado para exportar.','warn'); return; }
+  const header = ['Data/Hora','Usuário','Perfil','Ação','Detalhes'];
+  const rows = window._logsData.map(l=>[fmtTs(l.ts),l.ator_nome,ROLE_LABEL[l.ator_role]||l.ator_role,l.acao,l.detalhes||'']);
+  const csv = [header,...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download = `laadv_logs_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  toast('Exportado com sucesso!','ok');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PAINEL: CONFIGURAÇÕES (master only)
+   ═══════════════════════════════════════════════════════════════ */
+async function renderConfig(){
+  if(S.user.role !== 'master'){ document.getElementById('content').innerHTML=`<div class="page-body"><div class="alert alert-err">Acesso restrito.</div></div>`; return; }
+  const cfg = await dbRead('config');
+  document.getElementById('content').innerHTML = `
+    <div class="page-header"><h1>⚙️ Configurações do Sistema</h1><p>Gerenciamento avançado da plataforma.</p></div>
+    <div class="page-body">
+      <div class="grid-2">
+        <div class="card card-pad">
+          <h3 class="text-teal" style="margin-bottom:16px">Informações do Portal</h3>
+          <p class="text-sm"><strong>Organização:</strong> ${esc(cfg?.org_name||'–')}</p>
+          <p class="text-sm mt-1"><strong>Criado em:</strong> ${cfg?.criado_em?fmtData(cfg.criado_em):'–'}</p>
+          <p class="text-sm mt-1"><strong>Versão:</strong> LAADV Portal v2.0 · AKE/UFT-1.0</p>
+          <div class="divider"></div>
+          <div class="field" style="margin-bottom:10px"><label>Nome da organização</label>
+            <input type="text" id="cfg-org" value="${esc(cfg?.org_name||'')}"></div>
+          <button class="btn btn-primary btn-sm" onclick="salvarConfig(this)">Salvar</button>
+        </div>
+        <div class="card card-pad" style="border-top:3px solid var(--danger)">
+          <h3 style="color:var(--danger);margin-bottom:8px">Zona de Perigo</h3>
+          <p class="text-sm text-muted mb-2">Ações irreversíveis. Tenha certeza antes de prosseguir.</p>
+          <button class="btn btn-danger btn-sm mt-2" onclick="limparLogs()">🗑 Limpar todos os logs</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+async function salvarConfig(btn){
+  const org = document.getElementById('cfg-org').value.trim();
+  if(!org){ toast('Nome não pode ser vazio.','err'); return; }
+  setBtnLoading(btn, true);
+  try {
+    await dbUpdate('config', { org_name: org });
+    await audit('EDITAR_CONFIG', `Nome da organização: ${org}`);
+    toast('Configurações salvas!','ok');
+  } catch(e){
+    toast(`Erro: ${e.message}`,'err');
+  } finally {
+    setBtnLoading(btn, false);
+  }
+}
+
+function limparLogs(){
+  confirmar('Isso apagará <strong>todos os logs</strong> permanentemente. Deseja continuar?',
+    async function(){
+      await dbRemove('logs');
+      await audit('LIMPAR_LOGS', 'Todos os logs foram apagados pelo master');
+      toast('Logs removidos.','ok');
+      await renderConfig();
+    }
+  );
+}
+
+/* ─── HELPERS ──────────────────────────────────────────────────── */
+function iniciais(nome){ return (nome||'?').split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase(); }
+function primeiroNome(nome){ return (nome||'').split(' ')[0]; }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmtTs(ts){ try{ return new Date(ts).toLocaleString('pt-BR'); }catch{ return ts; } }
+function fmtData(ts){ try{ return new Date(ts).toLocaleDateString('pt-BR'); }catch{ return ts; } }
+const ACAO_LABEL = {
+  LOGIN:'Entrou no portal', LOGOUT:'Saiu do portal',
+  CRIAR_USUARIO:'Criou usuário', EDITAR_USUARIO:'Editou usuário', DELETAR_USUARIO:'Excluiu usuário',
+  ATIVAR_USUARIO:'Ativou usuário', DESATIVAR_USUARIO:'Desativou usuário',
+  ALTERAR_SENHA:'Alterou senha', RESETAR_SENHA:'Redefiniu senha', EDITAR_PERFIL:'Editou perfil',
+  CRIAR_TREINAMENTO:'Criou treinamento', EDITAR_TREINAMENTO:'Editou treinamento',
+  DELETAR_TREINAMENTO:'Excluiu treinamento', ATIVAR_TREINAMENTO:'Ativou treinamento',
+  DESATIVAR_TREINAMENTO:'Desativou treinamento',
+  ADICIONAR_VIDEO:'Adicionou vídeo', REMOVER_VIDEO:'Removeu vídeo',
+  CONCLUIR_TREINAMENTO:'Concluiu treinamento',
+  EDITAR_CONFIG:'Editou configurações', LIMPAR_LOGS:'Limpou logs', SETUP_INICIAL:'Configuração inicial',
+};
+function fmtAcao(a){ return ACAO_LABEL[a]||a; }
+function extrairYtId(url){
+  const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/);
+  return m ? m[1] : null;
+}
+function ytEmbed(url, titulo){
+  const id = extrairYtId(url);
+  if(id) return `<div class="video-embed"><iframe src="https://www.youtube.com/embed/${id}" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div>`;
+  return `<div class="video-embed" style="display:flex;align-items:center;justify-content:center;background:#111;border-radius:10px">
+    <a href="${url}" target="_blank" class="btn btn-gold">▶ Abrir Vídeo</a></div>`;
+}
+
+/* ─── INIT ─────────────────────────────────────────────────────── */
+async function init(){
+  // Verifica config Firebase
+  if(FIREBASE_CONFIG.apiKey === 'COLE_AQUI'){
+    document.getElementById('sc-loading').innerHTML = `
+      <div style="background:#fff;border-radius:12px;border-top:4px solid var(--gold);padding:36px;max-width:480px;text-align:center">
+        <div style="font-size:40px;margin-bottom:12px">⚙️</div>
+        <h2 style="color:var(--teal);font-family:'Cormorant Garamond',serif;font-size:24px;margin-bottom:10px">Configure o Firebase</h2>
+        <p style="font-size:14px;color:#5A6A7A;line-height:1.7">
+          Abra este arquivo em um editor de texto e preencha o objeto <code style="background:#f0f4f8;padding:2px 6px;border-radius:4px">FIREBASE_CONFIG</code> com as credenciais do seu projeto Firebase.<br><br>
+          <strong>console.firebase.google.com</strong> → Realtime Database → Criar banco → Copiar configuração
+        </p>
+      </div>`;
+    return;
+  }
+
+  try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.database();
+    document.getElementById('ake-ts').textContent = new Date().toLocaleString('pt-BR');
+
+    // Verifica setup
+    const setupDone = await dbRead('config/setup_done');
+    if(!setupDone){ showScreen('sc-setup'); return; }
+
+    // Verifica sessão ativa
+    const sess = getSession();
+    if(sess){
+      // Revalida no Firebase
+      const u = await dbRead(`usuarios/${sess.uid}`);
+      if(u && u.ativo){
+        S.user = { uid: sess.uid, ...u };
+        if(u.primeiro_acesso){ showScreen('sc-primeiro'); return; }
+        await iniciarApp();
+        return;
+      }
+    }
+    showScreen('sc-login');
+  } catch(e){
+    document.getElementById('sc-loading').innerHTML = `
+      <div style="background:#fff;border-radius:12px;padding:32px;max-width:400px;text-align:center">
+        <div style="font-size:36px;margin-bottom:10px">❌</div>
+        <h2 style="color:var(--danger);margin-bottom:8px">Erro de Conexão</h2>
+        <p style="font-size:14px;color:#5A6A7A">${e.message}</p>
+        <p style="font-size:13px;color:#5A6A7A;margin-top:10px">Verifique se o Firebase está configurado corretamente e se a Realtime Database está ativa.</p>
+      </div>`;
+    console.error(e);
+  }
+}
+
+init();
+</script>
+</body>
+</html>

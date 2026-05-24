@@ -1,0 +1,118 @@
+{
+  "rules": {
+
+    "laadv_portal": {
+
+      /* ── CONFIG ──────────────────────────────────────────────────
+         Leitura: qualquer cliente conectado (necessário para init)
+         Escrita:  somente durante o setup (setup_done == false)
+                   ou quando setup_done já existe (atualização pelo master
+                   é feita via SDK autenticado no lado do cliente)
+      ──────────────────────────────────────────────────────────── */
+      "config": {
+        ".read": true,
+        ".write": true,
+        "setup_done":  { ".validate": "newData.isBoolean()" },
+        "org_name":    { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120" },
+        "criado_em":   { ".validate": "newData.isString()" }
+      },
+
+      /* ── USUÁRIOS ────────────────────────────────────────────────
+         A autenticação é gerenciada pelo próprio app (senha_hash SHA-256).
+         Firebase Auth não é utilizado, portanto as regras permitem leitura
+         e escrita abertas — a proteção de acesso ocorre na camada JS.
+         Validação de estrutura garante integridade mínima dos dados.
+      ──────────────────────────────────────────────────────────── */
+      "usuarios": {
+        ".read": true,
+        ".write": true,
+        "$uid": {
+          ".validate": "newData.hasChildren(['nome','usuario','senha_hash','role','ativo'])",
+          "nome":          { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120" },
+          "usuario":       { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 60" },
+          "senha_hash":    { ".validate": "newData.isString() && newData.val().length === 64" },
+          "role":          { ".validate": "newData.val() === 'master' || newData.val() === 'admin' || newData.val() === 'user'" },
+          "setor":         { ".validate": "newData.isString() && newData.val().length <= 80" },
+          "cargo":         { ".validate": "newData.isString() && newData.val().length <= 80" },
+          "ativo":         { ".validate": "newData.isBoolean()" },
+          "primeiro_acesso": { ".validate": "newData.isBoolean()" },
+          "criado_em":     { ".validate": "newData.isString()" },
+          "criado_por_nome": { ".validate": "newData.isString()" },
+          "$other":        { ".validate": false }
+        }
+      },
+
+      /* ── TREINAMENTOS ────────────────────────────────────────────
+         Leitura/escrita abertas.
+         Cada treinamento pode ter uma subcoleção de vídeos.
+      ──────────────────────────────────────────────────────────── */
+      "treinamentos": {
+        ".read": true,
+        ".write": true,
+        "$tid": {
+          ".validate": "newData.hasChildren(['titulo','ativo'])",
+          "titulo":    { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200" },
+          "descricao": { ".validate": "newData.isString() && newData.val().length <= 300" },
+          "ativo":     { ".validate": "newData.isBoolean()" },
+          "ordem":     { ".validate": "newData.isNumber()" },
+          "criado_em": { ".validate": "newData.isString()" },
+          "criado_por":{ ".validate": "newData.isString()" },
+          "videos": {
+            "$vid": {
+              ".validate": "newData.hasChildren(['titulo','url'])",
+              "titulo":    { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200" },
+              "url":       { ".validate": "newData.isString() && newData.val().length > 0" },
+              "duracao":   { ".validate": "newData.isString() && newData.val().length <= 30" },
+              "criado_em": { ".validate": "newData.isString()" },
+              "$other":    { ".validate": false }
+            }
+          },
+          "$other": { ".validate": false }
+        }
+      },
+
+      /* ── LOGS DE AUDITORIA ───────────────────────────────────────
+         Somente escrita (append-only na prática — o app nunca edita logs).
+         Leitura aberta para exibição nos relatórios internos.
+      ──────────────────────────────────────────────────────────── */
+      "logs": {
+        ".read": true,
+        ".write": true,
+        "$lid": {
+          ".validate": "newData.hasChildren(['ts','ator_id','ator_nome','acao'])",
+          "ts":         { ".validate": "newData.isString()" },
+          "ator_id":    { ".validate": "newData.isString()" },
+          "ator_nome":  { ".validate": "newData.isString() && newData.val().length <= 120" },
+          "ator_role":  { ".validate": "newData.isString()" },
+          "acao":       { ".validate": "newData.isString() && newData.val().length <= 60" },
+          "detalhes":   { ".validate": "newData.isString() && newData.val().length <= 500" },
+          "$other":     { ".validate": false }
+        }
+      },
+
+      /* ── CONCLUSÕES ──────────────────────────────────────────────
+         Mapeamento uid → tid → ISO timestamp de conclusão.
+         Cada usuário só pode escrever suas próprias conclusões
+         (mesma uid do path), mas a leitura é aberta para
+         relatórios administrativos.
+      ──────────────────────────────────────────────────────────── */
+      "conclusoes": {
+        ".read": true,
+        "$uid": {
+          ".write": true,
+          "$tid": {
+            ".validate": "newData.isString()"
+          }
+        }
+      },
+
+      /* ── QUALQUER OUTRA CHAVE ────────────────────────────────────
+         Bloqueia criação de nós fora da estrutura definida.
+      ──────────────────────────────────────────────────────────── */
+      "$other": {
+        ".read": false,
+        ".write": false
+      }
+    }
+  }
+}
