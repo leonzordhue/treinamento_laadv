@@ -3,7 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0B4A44">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Portal de Treinamentos · Luís Albert Advocacia</title>
+<link rel="manifest" href="manifest.json">
 
 <!-- Firebase Realtime Database -->
 <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
@@ -34,6 +38,20 @@
   --r:10px; --r-sm:7px; --r-lg:16px;
   --sidebar:240px; --topbar:62px; --akebar:30px;
 }
+
+/* ── DARK MODE (TASK-24) ── */
+body.dark{
+  --bg:#0F1923; --surface:#162030; --border:#243040; --border-dark:#2D3F52;
+  --text:#E8EDF2; --muted:#8A9BAB; --light:#5A6A7A;
+  --teal:#1A6B63; --teal-mid:#1F7A71; --teal-light:#0F2B28;
+  --success-bg:#0A2A1A; --danger-bg:#2A0A08; --warn-bg:#2A2008; --info-bg:#0A2220;
+  --sh-sm:0 1px 4px rgba(0,0,0,.3); --sh-md:0 4px 18px rgba(0,0,0,.4); --sh-lg:0 8px 36px rgba(0,0,0,.5);
+}
+body.dark #sc-app { background:var(--bg) }
+body.dark .card,.dark .modal-box,.dark .auth-card{ background:var(--surface) }
+body.dark input,.dark select,.dark textarea{ background:var(--bg);color:var(--text);border-color:var(--border) }
+#dark-toggle{background:none;border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:var(--r-sm);padding:6px 10px;cursor:pointer;font-size:16px;line-height:1;transition:background .15s}
+#dark-toggle:hover{background:rgba(255,255,255,.12)}
 
 html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.5}
 h1,h2,h3{font-family:'Cormorant Garamond',serif}
@@ -249,6 +267,12 @@ tbody tr:hover td{background:var(--teal-light)}
 .empty-state h3{font-size:18px;color:var(--text);margin-bottom:6px}
 .empty-state p{font-size:14px;max-width:320px;margin:0 auto}
 .loading-panel{display:flex;align-items:center;justify-content:center;padding:80px;color:var(--muted);gap:12px}
+.bulk-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--teal);color:#fff;border-radius:var(--r-sm);margin-bottom:12px;flex-wrap:wrap}
+.bulk-bar span{font-weight:600;font-size:14px;flex:1;white-space:nowrap}
+.tab-bar{display:flex;gap:4px;border-bottom:2px solid var(--border);margin-bottom:20px}
+.tab-btn{padding:10px 18px;font-size:14px;font-weight:500;color:var(--muted);background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;transition:color .15s,border-color .15s}
+.tab-btn:hover{color:var(--teal)}
+.tab-btn.active{color:var(--teal);border-bottom-color:var(--teal);font-weight:600}
 .alert{padding:12px 16px;border-radius:var(--r-sm);font-size:14px;margin-bottom:16px}
 .alert-err{background:var(--danger-bg);color:var(--danger);border:1px solid #FECACA}
 .alert-ok{background:var(--success-bg);color:var(--success);border:1px solid #A7F3D0}
@@ -278,6 +302,27 @@ tbody tr:hover td{background:var(--teal-light)}
 .filter-bar input,.filter-bar select{padding:8px 12px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:13px;background:#fff;color:var(--text);outline:none;min-width:180px}
 .filter-bar input:focus,.filter-bar select:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(11,74,68,.1)}
 .char-count{font-size:11px;color:var(--muted);margin-top:4px;text-align:right}
+
+/* ── QUIZ (TASK-21) ── */
+.quiz-opcao{display:flex;align-items:center;gap:12px;padding:14px 16px;border:2px solid var(--border);border-radius:var(--r-sm);cursor:pointer;margin-bottom:10px;font-size:14px;transition:border-color .18s,background .18s}
+.quiz-opcao:hover{background:var(--teal-light);border-color:var(--teal)}
+.quiz-opcao.selecionada{background:var(--teal-light);border-color:var(--teal)}
+.quiz-opcao.correta{background:var(--success-bg);border-color:var(--success)}
+.quiz-opcao.errada{background:var(--danger-bg);border-color:var(--danger)}
+.quiz-opcao input[type=radio]{accent-color:var(--teal);flex-shrink:0}
+.quiz-progresso{height:6px;background:var(--bg);border-radius:99px;overflow:hidden;margin-bottom:20px}
+.quiz-progresso-fill{height:100%;background:var(--gold);border-radius:99px;transition:width .4s}
+.quiz-pergunta{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--text);margin-bottom:20px;line-height:1.4}
+.quiz-resultado{text-align:center;padding:40px 24px}
+.quiz-score{font-family:'Cormorant Garamond',serif;font-size:56px;font-weight:700;line-height:1}
+
+/* ── COMUNICADOS (TASK-20) ── */
+.comun-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;margin-bottom:10px;box-shadow:var(--sh-sm)}
+.comun-titulo{font-weight:600;font-size:15px;color:var(--text);margin-bottom:4px}
+.comun-meta{font-size:11px;color:var(--muted);margin-bottom:8px;display:flex;gap:12px;align-items:center}
+.comun-corpo{font-size:14px;color:var(--muted);line-height:1.6}
+.comun-corpo.truncado{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.comun-ler-mais{background:none;border:none;color:var(--teal);font-size:13px;cursor:pointer;padding:4px 0;font-weight:500}
 
 /* ── CONTENT ADMIN CARDS (TASK-09) ── */
 .ci-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-sm);margin-bottom:12px;overflow:hidden;transition:box-shadow .2s}
@@ -385,6 +430,7 @@ tbody tr:hover td{background:var(--teal-light)}
         <small id="top-role-label">–</small>
       </div>
       <div class="top-avatar" id="top-avatar" title="Perfil" onclick="navTo('perfil')">?</div>
+      <button id="dark-toggle" onclick="toggleDarkMode()" title="Alternar tema">🌙</button>
       <button class="btn-sair" onclick="doLogout()">Sair</button>
     </div>
   </header>
@@ -824,9 +870,25 @@ function pararTimerSessao(){
 }
 
 /* ── INICIAR APP ───────────────────────────────────────────────── */
+/* ── DARK MODE (TASK-24) ─────────────────────────────────────── */
+function applyDarkMode(){
+  const dark = localStorage.getItem('laadv_theme') === 'dark';
+  document.body.classList.toggle('dark', dark);
+  const btn = document.getElementById('dark-toggle');
+  if(btn) btn.textContent = dark ? '☀️' : '🌙';
+}
+
+window.toggleDarkMode = function(){
+  const isDark = document.body.classList.toggle('dark');
+  localStorage.setItem('laadv_theme', isDark ? 'dark' : 'light');
+  const btn = document.getElementById('dark-toggle');
+  if(btn) btn.textContent = isDark ? '☀️' : '🌙';
+};
+
 async function iniciarApp(){
   const u = S.user;
   showScreen('sc-app');
+  applyDarkMode();
   // topbar
   document.getElementById('top-nome').textContent  = u.nome;
   document.getElementById('top-role-label').textContent = ROLE_LABEL[u.role]||u.role;
@@ -868,8 +930,8 @@ async function renderInicio(){
     <div class="page-body">`;
 
   if(u.role !== 'user'){
-    const [usuarios, treinamentos, logs, conclusoes] = await Promise.all([
-      dbRead('usuarios'), dbRead('treinamentos'), dbRead('logs'), dbRead('conclusoes')
+    const [usuarios, treinamentos, logs, conclusoes, comunicados] = await Promise.all([
+      dbRead('usuarios'), dbRead('treinamentos'), dbRead('logs'), dbRead('conclusoes'), dbRead('comunicados')
     ]);
     const nu = usuarios ? Object.values(usuarios).filter(x=>x.ativo).length : 0;
     const nt = treinamentos ? Object.values(treinamentos).filter(x=>x.ativo).length : 0;
@@ -934,6 +996,7 @@ async function renderInicio(){
       html += `<div class="empty-state"><div class="empty-icon">📋</div><h3>Nenhum registro ainda</h3><p>As atividades aparecerão aqui.</p></div>`;
     }
 
+    html += buildComunicadosHtml(comunicados, u.role);
     html += `</div>`;
     document.getElementById('content').innerHTML = html;
 
@@ -974,10 +1037,11 @@ async function renderInicio(){
     return;
   } else {
     // User dashboard — progresso
-    const [treins, concs, prog] = await Promise.all([
+    const [treins, concs, prog, comunicados] = await Promise.all([
       dbRead('treinamentos'),
       dbRead(`conclusoes/${u.uid}`),
-      dbRead(`progresso/${u.uid}`)
+      dbRead(`progresso/${u.uid}`),
+      dbRead('comunicados')
     ]);
     const todos   = treins  ? Object.entries(treins).filter(([,t])=>t.ativo).sort((a,b)=>(a[1].ordem||0)-(b[1].ordem||0)) : [];
     const concMap = concs || {};
@@ -1011,11 +1075,112 @@ async function renderInicio(){
         </div>`;
       }).join('')||`<div class="empty-state"><div class="empty-icon">🎓</div><h3>Nenhum treinamento disponível</h3><p>Fique atento a novos conteúdos.</p></div>`}
     </div>`;
+    html += buildComunicadosHtml(comunicados, u.role);
   }
 
   html += `</div>`;
   document.getElementById('content').innerHTML = html;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   COMUNICADOS (TASK-20)
+   ═══════════════════════════════════════════════════════════════ */
+function tempoRelativo(ts){
+  const diff = (Date.now() - new Date(ts).getTime()) / 1000;
+  if(diff < 60)   return 'agora mesmo';
+  if(diff < 3600) return `há ${Math.floor(diff/60)} min`;
+  if(diff < 86400)return `há ${Math.floor(diff/3600)} h`;
+  const days = Math.floor(diff/86400);
+  return days === 1 ? 'há 1 dia' : `há ${days} dias`;
+}
+
+function buildComunicadosHtml(comData, role){
+  const lista = comData
+    ? Object.entries(comData).filter(([,c])=>c.ativo).sort((a,b)=>b[1].criado_em.localeCompare(a[1].criado_em)).slice(0,5)
+    : [];
+  const podeGerenciar = role==='master'||role==='admin';
+  const header = podeGerenciar
+    ? `<div class="flex justify-between items-center" style="margin-bottom:14px">
+        <p class="section-label" style="margin:0">Comunicados</p>
+        <button class="btn btn-ghost btn-sm" onclick="abrirNovoComunicado()">+ Novo Comunicado</button>
+       </div>`
+    : `<p class="section-label" style="margin-bottom:14px">Comunicados</p>`;
+
+  if(!lista.length){
+    return `<div style="margin-top:20px">${header}<p class="text-sm text-muted">Nenhum comunicado no momento.</p></div>`;
+  }
+
+  const cards = lista.map(([cid,c])=>{
+    const corpo = esc(c.corpo||'');
+    const trunca = c.corpo && c.corpo.length > 120;
+    const gerBtns = podeGerenciar
+      ? `<button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="toggleComunicado('${cid}',false)">Desativar</button>`
+      : '';
+    return `<div class="comun-card">
+      <div class="comun-titulo">${esc(c.titulo)}</div>
+      <div class="comun-meta">
+        <span>✍ ${esc(c.autor_nome||'')}</span>
+        <span>🕐 ${tempoRelativo(c.criado_em)}</span>
+      </div>
+      <div class="comun-corpo${trunca?' truncado':''}" id="comun-corpo-${cid}">${corpo}</div>
+      ${trunca?`<button class="comun-ler-mais" id="comun-btn-${cid}" onclick="expandirComunicado('${cid}')">Ler mais ▼</button>`:''}
+      ${gerBtns}
+    </div>`;
+  }).join('');
+
+  return `<div style="margin-top:24px">${header}${cards}</div>`;
+}
+
+window.expandirComunicado = function(cid){
+  const el  = document.getElementById(`comun-corpo-${cid}`);
+  const btn = document.getElementById(`comun-btn-${cid}`);
+  if(!el) return;
+  const expandido = !el.classList.contains('truncado');
+  el.classList.toggle('truncado', expandido);
+  if(btn) btn.textContent = expandido ? 'Ler mais ▼' : 'Recolher ▲';
+};
+
+window.abrirNovoComunicado = function(){
+  abrirModal('Novo Comunicado',
+    `<div id="nc-alert"></div>
+     <div class="field"><label>Título</label><input type="text" id="nc-titulo" placeholder="Ex: Aviso sobre folga coletiva"></div>
+     <div class="field"><label>Corpo do comunicado</label>
+       <textarea id="nc-corpo" rows="5" maxlength="1000" placeholder="Escreva o comunicado aqui…" oninput="contarChars(this,'nc-count')"></textarea>
+       <div class="char-count" id="nc-count">0/1000 caracteres</div></div>`,
+    `<button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
+     <button class="btn btn-primary" onclick="salvarComunicado(this)">Publicar</button>`
+  );
+};
+
+window.salvarComunicado = async function(btn){
+  const titulo = document.getElementById('nc-titulo').value.trim();
+  const corpo  = document.getElementById('nc-corpo').value.trim();
+  const alrt   = document.getElementById('nc-alert');
+  if(!titulo||!corpo){ alrt.innerHTML=`<div class="alert alert-err">Título e corpo são obrigatórios.</div>`; return; }
+  setBtnLoading(btn, true);
+  try {
+    await dbPush('comunicados',{
+      titulo, corpo,
+      autor_nome: S.user.nome,
+      criado_em:  new Date().toISOString(),
+      ativo: true
+    });
+    await audit('COMUNICADO_CRIADO', titulo);
+    toast('Comunicado publicado!','ok');
+    fecharModal();
+    await renderInicio();
+  } catch(e){
+    alrt.innerHTML=`<div class="alert alert-err">Erro: ${e.message}</div>`;
+  } finally {
+    setBtnLoading(btn, false);
+  }
+};
+
+window.toggleComunicado = async function(cid, ativo){
+  await dbUpdate(`comunicados/${cid}`,{ ativo });
+  toast(ativo?'Comunicado reativado.':'Comunicado desativado.','ok');
+  await renderInicio();
+};
 
 /* ═══════════════════════════════════════════════════════════════
    PAINEL: TREINAMENTOS (user view)
@@ -1067,30 +1232,49 @@ async function verTreinamento(tid){
 
 async function renderTreinamentoDetalhe(tid){
   const uid = S.user.uid;
-  const [t, concs, prog] = await Promise.all([
+  const [t, concs, prog, resposta] = await Promise.all([
     dbRead(`treinamentos/${tid}`),
     dbRead(`conclusoes/${uid}`),
-    dbRead(`progresso/${uid}/${tid}`)
+    dbRead(`progresso/${uid}/${tid}`),
+    dbRead(`respostas/${uid}/${tid}`)
   ]);
   if(!t){ toast('Treinamento não encontrado.','err'); await navTo('treinos'); return; }
-  const concMap   = concs || {};
-  const feito     = !!concMap[tid];
-  const progMap   = prog  || {};
-  const videos    = t.videos ? Object.entries(t.videos) : [];
-  const total     = videos.length;
+  const concMap    = concs || {};
+  const feito      = !!concMap[tid];
+  const progMap    = prog  || {};
+  const videos     = t.videos ? Object.entries(t.videos) : [];
+  const total      = videos.length;
   const assistidos = Object.keys(progMap).length;
-  const pct       = total ? Math.round((assistidos/total)*100) : 0;
-  const vidAtual  = videos.length ? videos[0] : null;
+  const pct        = total ? Math.round((assistidos/total)*100) : 0;
+  const vidAtual   = videos.length ? videos[0] : null;
   const vidAtualId = vidAtual ? vidAtual[0] : null;
+  const quiz       = t.quiz ? Object.entries(t.quiz) : [];
+  const temQuiz    = quiz.length > 0;
+  const todosAssist= total > 0 && assistidos >= total;
 
   window._treinsVideos   = Object.fromEntries(videos);
   window._vidProgresso   = progMap;
   window._treinAtualTid  = tid;
   window._treinAtualVid  = vidAtualId;
+  window._treinTemQuiz   = temQuiz;
 
   const buildAssistidoBtn = (vid) => progMap[vid]
     ? `<span class="badge badge-green" style="padding:8px 14px">✓ Assistido</span>`
     : `<button class="btn btn-primary btn-sm" id="btn-assistido" onclick="marcarVideoAssistido('${tid}','${vid}')">✓ Marcar como assistido</button>`;
+
+  // Ação disponível no sidebar direito
+  let acaoHtml = '';
+  if(feito){
+    acaoHtml = `<div class="badge badge-green" style="width:100%;justify-content:center;padding:10px;margin-top:12px">✓ Treinamento concluído!</div>
+      <button class="btn btn-gold btn-full mt-2" onclick="gerarCertificado('${uid}','${tid}')">🏆 Baixar Certificado</button>`;
+    if(resposta) acaoHtml += `<div class="alert alert-ok mt-2" style="text-align:center;margin-top:10px">
+      Avaliação: <strong>${resposta.score}/${resposta.total}</strong> — ${resposta.aprovado?'Aprovado ✓':'Reprovado'}</div>`;
+  } else if(todosAssist && temQuiz){
+    acaoHtml = `<button class="btn btn-primary btn-full mt-2" onclick="iniciarQuiz('${tid}')">📝 Fazer Avaliação</button>`;
+    if(resposta && !resposta.aprovado) acaoHtml += `<p class="text-sm text-muted mt-1" style="text-align:center">Melhor tentativa: ${resposta.score}/${resposta.total}. Tente novamente.</p>`;
+  } else if(todosAssist && !temQuiz){
+    // sem quiz — já deve ter sido auto-concluído por marcarVideoAssistido
+  }
 
   let html = `<div class="page-header">
     <div class="flex items-center gap-md">
@@ -1131,10 +1315,7 @@ async function renderTreinamentoDetalhe(tid){
               </div>
             </div>`).join('')||'<p class="text-sm text-muted">Nenhum vídeo cadastrado.</p>'}
         </div>
-        ${feito
-          ? `<div class="badge badge-green" style="width:100%;justify-content:center;padding:10px;margin-top:12px">✓ Treinamento concluído!</div>
-             <button class="btn btn-gold btn-full mt-2" onclick="gerarCertificado('${uid}','${tid}')">🏆 Baixar Certificado</button>`
-          : ''}
+        ${acaoHtml}
       </div>
     </div>
   </div>`;
@@ -1173,12 +1354,18 @@ window.marcarVideoAssistido = async function(tid, vid){
   const viEl = document.getElementById(`vi-${vid}`);
   if(viEl){ viEl.classList.add('done'); viEl.querySelector('.vi-num').textContent='✓'; }
 
-  // verifica conclusão automática
   const total = window._treinsVideos ? Object.keys(window._treinsVideos).length : 0;
   const assistidos = Object.keys(window._vidProgresso).length;
   if(total>0 && assistidos>=total){
     const jaFeito = await dbRead(`conclusoes/${uid}/${tid}`);
-    if(!jaFeito) await marcarConcluido(tid);
+    if(!jaFeito){
+      if(window._treinTemQuiz){
+        toast('Todos os vídeos assistidos! Agora faça a avaliação para concluir.','ok');
+        await renderTreinamentoDetalhe(tid);
+      } else {
+        await marcarConcluido(tid);
+      }
+    }
   } else {
     toast('Vídeo marcado como assistido!','ok');
   }
@@ -1189,6 +1376,136 @@ async function marcarConcluido(tid){
   await audit('CONCLUIR_TREINAMENTO', `Concluiu: ${tid}`);
   toast('Parabéns! Treinamento concluído! 🎉','ok');
   await renderTreinamentoDetalhe(tid);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   QUIZ PÓS-TREINAMENTO (TASK-21)
+   ═══════════════════════════════════════════════════════════════ */
+window.iniciarQuiz = async function(tid){
+  const t = await dbRead(`treinamentos/${tid}`);
+  if(!t||!t.quiz){ toast('Quiz não disponível.','err'); return; }
+  const perguntas = Object.entries(t.quiz).sort((a,b)=>a[0].localeCompare(b[0]));
+  if(!perguntas.length){ toast('Este treinamento não tem perguntas cadastradas.','warn'); return; }
+  window._quizState = { tid, titulo:t.titulo, perguntas, atual:0, respostas:[], selecionada:null };
+  renderQuestaoAtual();
+};
+
+function renderQuestaoAtual(){
+  const qs = window._quizState;
+  if(!qs) return;
+  const { perguntas, atual, titulo, tid } = qs;
+  const total = perguntas.length;
+  const [, q] = perguntas[atual];
+  const pct = Math.round((atual/total)*100);
+  const opcoes = (q.opcoes||[]).map((op,i)=>`
+    <div class="quiz-opcao" id="qop-${i}" onclick="selecionarOpcaoQuiz(${i})">
+      <input type="radio" name="qop" value="${i}" style="pointer-events:none"> ${esc(op)}
+    </div>`).join('');
+
+  document.getElementById('content').innerHTML = `
+    <div class="page-header">
+      <div class="flex items-center gap-md">
+        <button class="btn btn-ghost btn-sm" onclick="verTreinamento('${tid}')" style="background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff">← Voltar</button>
+        <div><h1>${esc(titulo)}</h1><p>Avaliação pós-treinamento</p></div>
+      </div>
+    </div>
+    <div class="page-body">
+      <div style="max-width:640px;margin:0 auto">
+        <div class="quiz-progresso"><div class="quiz-progresso-fill" style="width:${pct}%"></div></div>
+        <p class="text-sm text-muted" style="margin-bottom:16px">Pergunta ${atual+1} de ${total}</p>
+        <div class="quiz-pergunta">${esc(q.pergunta)}</div>
+        <div id="quiz-opcoes">${opcoes}</div>
+        <div style="text-align:right;margin-top:24px">
+          <button id="btn-proxima" class="btn btn-primary" disabled onclick="proximaQuestao()">
+            ${atual===total-1?'Finalizar ✓':'Próxima →'}
+          </button>
+        </div>
+      </div>
+    </div>`;
+  qs.selecionada = null;
+}
+
+window.selecionarOpcaoQuiz = function(i){
+  const qs = window._quizState;
+  if(!qs) return;
+  qs.selecionada = i;
+  document.querySelectorAll('.quiz-opcao').forEach((el,idx)=>{
+    el.classList.toggle('selecionada', idx===i);
+    const r = el.querySelector('input[type=radio]');
+    if(r) r.checked = (idx===i);
+  });
+  const btn = document.getElementById('btn-proxima');
+  if(btn) btn.disabled = false;
+};
+
+window.proximaQuestao = async function(){
+  const qs = window._quizState;
+  if(!qs||qs.selecionada===null) return;
+  qs.respostas.push(qs.selecionada);
+  qs.selecionada = null;
+  qs.atual++;
+  if(qs.atual < qs.perguntas.length){
+    renderQuestaoAtual();
+  } else {
+    await finalizarQuiz();
+  }
+};
+
+async function finalizarQuiz(){
+  const qs = window._quizState;
+  if(!qs) return;
+  const { tid, perguntas, respostas, titulo } = qs;
+  const uid = S.user.uid;
+
+  let score = 0;
+  perguntas.forEach(([,q],i)=>{ if(respostas[i]===q.correta) score++; });
+  const total = perguntas.length;
+  const aprovado = (score/total) >= 0.7;
+  const ts = new Date().toISOString();
+
+  const anterior = await dbRead(`respostas/${uid}/${tid}`);
+  if(!anterior || score > (anterior.score||0)){
+    await dbSet(`respostas/${uid}/${tid}`, { score, total, ts, aprovado });
+  }
+
+  if(aprovado && !(await dbRead(`conclusoes/${uid}/${tid}`))){
+    await dbSet(`conclusoes/${uid}/${tid}`, ts);
+    await audit('CONCLUIR_TREINAMENTO', `Concluiu via quiz: ${tid}`);
+    toast('Parabéns! Treinamento concluído! 🎉','ok');
+  }
+  await audit(aprovado?'QUIZ_APROVADO':'QUIZ_REPROVADO', `Score: ${score}/${total} — ${tid}`);
+
+  const pct = Math.round((score/total)*100);
+  document.getElementById('content').innerHTML = `
+    <div class="page-header">
+      <div class="flex items-center gap-md">
+        <div><h1>${esc(titulo)}</h1><p>Resultado da avaliação</p></div>
+      </div>
+    </div>
+    <div class="page-body">
+      <div class="quiz-resultado" style="max-width:520px;margin:0 auto">
+        <div class="quiz-score" style="color:${aprovado?'var(--success)':'var(--danger)'}">
+          ${score}<span style="font-size:28px;color:var(--muted)">/${total}</span>
+        </div>
+        <p class="text-sm text-muted mt-1">${pct}% de aproveitamento</p>
+        <div class="badge ${aprovado?'badge-green':'badge-red'}"
+             style="font-size:15px;padding:10px 28px;margin-top:16px;display:inline-flex">
+          ${aprovado?'✓ Aprovado — parabéns!':'✗ Reprovado — tente novamente'}
+        </div>
+        <p style="margin:20px 0 28px;color:var(--muted);font-size:14px">
+          ${aprovado
+            ?'Você atingiu o mínimo de 70%. Seu certificado de conclusão está disponível.'
+            :'Você precisa de pelo menos 70% para ser aprovado. Revise o conteúdo e tente novamente.'}
+        </p>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          ${aprovado
+            ?`<button class="btn btn-gold btn-full" onclick="gerarCertificado('${uid}','${tid}')">🏆 Baixar Certificado</button>
+              <button class="btn btn-ghost btn-full" onclick="S.subView=null;renderTreinos()">← Voltar para treinamentos</button>`
+            :`<button class="btn btn-primary btn-full" onclick="iniciarQuiz('${tid}')">🔄 Refazer avaliação</button>
+              <button class="btn btn-ghost btn-full" onclick="verTreinamento('${tid}')">← Rever treinamento</button>`}
+        </div>
+      </div>
+    </div>`;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1284,7 +1601,46 @@ async function renderPerfil(){
           <p class="text-sm text-muted mt-1"><strong>Membro desde:</strong> ${u.criado_em ? fmtData(u.criado_em) : '–'}</p>
         </div>
       </div>
+      <div class="card card-pad" style="margin-top:var(--gap)">
+        <h3 style="margin-bottom:14px;color:var(--teal)">Meus Treinamentos</h3>
+        <div id="perfil-treins-body"><div class="spinner" style="margin:12px auto"></div></div>
+      </div>
     </div>`;
+
+  // Carrega histórico de avaliações de forma assíncrona
+  (async ()=>{
+    const uid = u.uid;
+    const [respostasData, conclusoesData, treinsData] = await Promise.all([
+      dbRead(`respostas/${uid}`),
+      dbRead(`conclusoes/${uid}`),
+      dbRead('treinamentos')
+    ]);
+    const el = document.getElementById('perfil-treins-body');
+    if(!el) return;
+    const respostas = respostasData||{};
+    const conclusoes = conclusoesData||{};
+    const treins = treinsData||{};
+    const tids = [...new Set([...Object.keys(conclusoes),...Object.keys(respostas)])];
+    if(!tids.length){ el.innerHTML='<p class="text-sm text-muted">Nenhum treinamento iniciado ainda.</p>'; return; }
+    el.innerHTML = tids.map(tid=>{
+      const t = treins[tid]; if(!t) return '';
+      const concTs = conclusoes[tid];
+      const resp = respostas[tid];
+      const pct = resp ? Math.round((resp.score/resp.total)*100) : null;
+      return `<div style="display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid var(--border)">
+        <div style="flex:1">
+          <div style="font-weight:500;font-size:14px">${esc(t.titulo)}</div>
+          <div class="text-sm text-muted">${concTs?'Concluído em '+fmtData(concTs):'Em andamento'}</div>
+        </div>
+        ${resp
+          ?`<div style="text-align:right">
+              <span class="badge ${resp.aprovado?'badge-green':'badge-red'}">${resp.aprovado?'Aprovado':'Reprovado'}</span>
+              <div class="text-sm text-muted mt-1">${resp.score}/${resp.total} (${pct}%)</div>
+            </div>`
+          :concTs?`<span class="badge badge-green">✓ Concluído</span>`:``}
+      </div>`;
+    }).filter(Boolean).join('') || '<p class="text-sm text-muted">Nenhum treinamento iniciado ainda.</p>';
+  })();
 }
 
 async function salvarPerfil(btn){
@@ -1344,11 +1700,15 @@ async function alterarSenha(btn){
 async function renderUsuarios(){
   const data = await dbRead('usuarios');
   const lista = data ? Object.entries(data).sort((a,b)=>a[1].nome.localeCompare(b[1].nome)) : [];
+  window._usuariosData = data||{};
 
   let rows = lista.map(([uid, u])=>{
     const pode = podeGerenciarUsuario(u.role);
     const isSelf = uid === S.user.uid;
-    return `<tr>
+    return `<tr data-uid="${uid}">
+      <td style="width:36px;padding-right:0">
+        ${!isSelf ? `<input type="checkbox" class="sel-user" data-uid="${uid}" onchange="atualizarBulkBar()" style="width:16px;height:16px;accent-color:var(--teal)">` : ''}
+      </td>
       <td>
         <div class="flex items-center gap-sm">
           <div style="width:36px;height:36px;border-radius:50%;background:var(--teal-light);color:var(--teal);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0">${iniciais(u.nome)}</div>
@@ -1384,12 +1744,74 @@ async function renderUsuarios(){
       <div class="filter-bar">
         <input type="text" id="user-search" placeholder="Buscar por nome ou setor…" oninput="filtrarUsuarios(this.value)">
       </div>
+      <div class="bulk-bar" id="bulk-bar" style="display:none">
+        <span id="bulk-count">0 selecionados</span>
+        <button class="btn btn-ghost btn-sm" style="border-color:rgba(255,255,255,.4);color:#fff" onclick="bulkAtivar()">Ativar todos</button>
+        <button class="btn btn-ghost btn-sm" style="border-color:rgba(255,255,255,.4);color:#fff" onclick="bulkDesativar()">Desativar todos</button>
+        <button class="btn btn-ghost btn-sm" style="border-color:rgba(255,255,255,.4);color:#fff" onclick="bulkExportar()">⬇ Exportar selecionados</button>
+      </div>
       <div class="card"><div class="tbl-wrap"><table id="tabela-usuarios">
-        <thead><tr><th>Nome / Login</th><th>Setor</th><th>Cargo</th><th>Perfil</th><th>Status</th><th>Ações</th></tr></thead>
+        <thead><tr>
+          <th style="width:36px"><input type="checkbox" id="sel-all" onchange="toggleSelectAll(this)" style="width:16px;height:16px;accent-color:var(--teal)"></th>
+          <th>Nome / Login</th><th>Setor</th><th>Cargo</th><th>Perfil</th><th>Status</th><th>Ações</th>
+        </tr></thead>
         <tbody>${rows}</tbody>
       </table></div></div>`}
     </div>`;
 }
+
+/* ── BULK ACTIONS (TASK-23) ────────────────────────────────── */
+window.toggleSelectAll = function(chk){
+  document.querySelectorAll('.sel-user').forEach(c=>{ c.checked = chk.checked; });
+  atualizarBulkBar();
+};
+
+function atualizarBulkBar(){
+  const sels = [...document.querySelectorAll('.sel-user:checked')];
+  const bar  = document.getElementById('bulk-bar');
+  const cnt  = document.getElementById('bulk-count');
+  if(bar) bar.style.display = sels.length ? 'flex' : 'none';
+  if(cnt) cnt.textContent = `${sels.length} selecionado(s)`;
+  const selAll = document.getElementById('sel-all');
+  const total  = document.querySelectorAll('.sel-user').length;
+  if(selAll) selAll.indeterminate = sels.length > 0 && sels.length < total;
+}
+
+function _bulkUids(){ return [...document.querySelectorAll('.sel-user:checked')].map(c=>c.dataset.uid); }
+
+window.bulkAtivar = async function(){
+  const uids = _bulkUids();
+  if(!uids.length) return;
+  confirmar(`Ativar <strong>${uids.length}</strong> usuário(s) selecionado(s)?`, async function(){
+    await Promise.all(uids.map(uid=>dbUpdate(`usuarios/${uid}`,{ativo:true})));
+    await audit('BULK_ATIVACAO', `${uids.length} usuários ativados`);
+    toast(`${uids.length} usuário(s) ativado(s).`,'ok');
+    await renderUsuarios();
+  });
+};
+
+window.bulkDesativar = async function(){
+  const uids = _bulkUids();
+  if(!uids.length) return;
+  confirmar(`Desativar <strong>${uids.length}</strong> usuário(s) selecionado(s)?`, async function(){
+    await Promise.all(uids.map(uid=>dbUpdate(`usuarios/${uid}`,{ativo:false})));
+    await audit('BULK_DESATIVACAO', `${uids.length} usuários desativados`);
+    toast(`${uids.length} usuário(s) desativado(s).`,'ok');
+    await renderUsuarios();
+  });
+};
+
+window.bulkExportar = function(){
+  const uids = new Set(_bulkUids());
+  if(!uids.size){ toast('Nenhum usuário selecionado.','warn'); return; }
+  const data = window._usuariosData||{};
+  const header = [['Nome','Login','Setor','Cargo','Perfil','Status']];
+  const rows = [...uids].map(uid=>{
+    const u = data[uid]; if(!u) return null;
+    return [u.nome,u.usuario,u.setor||'',u.cargo||'',ROLE_LABEL[u.role]||u.role,u.ativo?'Ativo':'Inativo'];
+  }).filter(Boolean);
+  csvDownload([...header,...rows], `laadv-usuarios-sel-${new Date().toISOString().slice(0,10)}.csv`);
+};
 
 function abrirFormUsuario(uid=null){
   dbRead(uid ? `usuarios/${uid}` : null).then(u=>{
@@ -1547,6 +1969,26 @@ async function renderConteudo(){
         <button class="btn btn-primary btn-sm mt-1" onclick="adicionarVideoConteudo('${tid}',this)">+ Salvar Vídeo</button>
       </div>`;
 
+    // Quiz section
+    const quizPerguntas = t.quiz ? Object.entries(t.quiz) : [];
+    const quizHtml = quizPerguntas.map(([qid,q],i)=>`
+      <div class="ci-vid-row">
+        <div class="ci-vid-num">${i+1}</div>
+        <div class="ci-vid-info">
+          <div class="ci-vid-title">${esc(q.pergunta)}</div>
+          <div class="ci-vid-dur">${q.opcoes?q.opcoes.length:0} opções · correta: ${(q.opcoes&&q.opcoes[q.correta])?esc(q.opcoes[q.correta].slice(0,30)):'?'}</div>
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="excluirPergunta('${tid}','${qid}')">✕</button>
+      </div>`).join('') || `<p class="text-sm text-muted" style="padding:8px 0">Nenhuma pergunta cadastrada.</p>`;
+    const quizSection = `
+      <div style="border-top:2px solid var(--border-dark);padding:16px 20px;background:var(--gold-light)">
+        <div class="flex justify-between items-center" style="margin-bottom:10px">
+          <p class="section-label" style="margin:0">Quiz pós-treinamento <span class="badge badge-teal" style="font-size:11px">${quizPerguntas.length} pergunta${quizPerguntas.length!==1?'s':''}</span></p>
+          <button class="btn btn-ghost btn-sm" onclick="abrirAddPergunta('${tid}')">+ Nova Pergunta</button>
+        </div>
+        ${quizHtml}
+      </div>`;
+
     return `
       <div class="ci-card" id="ci-${tid}">
         <div class="ci-header">
@@ -1566,7 +2008,7 @@ async function renderConteudo(){
             </div>
           </div>
         </div>
-        ${expandido ? `<div class="ci-videos" id="ci-vids-${tid}">${vidsHtml}${addForm}</div>` : ''}
+        ${expandido ? `<div class="ci-videos" id="ci-vids-${tid}">${vidsHtml}${addForm}</div>${quizSection}` : ''}
       </div>`;
   }).join('');
 
@@ -1636,6 +2078,57 @@ window.deletarTreinComCheck = function(tid, titulo){
       window._expandidos.delete(tid);
       await audit('DELETAR_TREINAMENTO', `Excluiu: "${titulo}"`);
       toast('Treinamento excluído.','ok');
+      await renderConteudo();
+    }
+  );
+};
+
+/* ── QUIZ ADMIN CRUD ── */
+window.abrirAddPergunta = function(tid){
+  abrirModal('Nova Pergunta do Quiz',
+    `<div id="qf-alert"></div>
+     <div class="field"><label>Pergunta</label>
+       <textarea id="qf-pergunta" rows="3" placeholder="Ex: Qual é o prazo máximo para resposta de e-mail?"></textarea></div>
+     <div class="field"><label>Opção A</label><input type="text" id="qf-op0" placeholder="Primeira opção"></div>
+     <div class="field"><label>Opção B</label><input type="text" id="qf-op1" placeholder="Segunda opção"></div>
+     <div class="field"><label>Opção C</label><input type="text" id="qf-op2" placeholder="Terceira opção"></div>
+     <div class="field"><label>Opção D</label><input type="text" id="qf-op3" placeholder="Quarta opção"></div>
+     <div class="field"><label>Opção correta</label>
+       <select id="qf-correta">
+         <option value="0">A</option><option value="1">B</option>
+         <option value="2">C</option><option value="3">D</option>
+       </select></div>`,
+    `<button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
+     <button class="btn btn-primary" onclick="salvarPergunta('${tid}',this)">Salvar Pergunta</button>`
+  );
+};
+
+window.salvarPergunta = async function(tid, btn){
+  const pergunta = document.getElementById('qf-pergunta').value.trim();
+  const opcoes   = [0,1,2,3].map(i=>document.getElementById(`qf-op${i}`).value.trim());
+  const correta  = parseInt(document.getElementById('qf-correta').value);
+  const alrt     = document.getElementById('qf-alert');
+  if(!pergunta || opcoes.some(o=>!o)){
+    alrt.innerHTML=`<div class="alert alert-err">Preencha a pergunta e todas as 4 opções.</div>`; return;
+  }
+  setBtnLoading(btn, true);
+  try {
+    await dbPush(`treinamentos/${tid}/quiz`, { pergunta, opcoes, correta });
+    await audit('QUIZ_PERGUNTA_ADICIONADA', `Pergunta adicionada ao treinamento ${tid}`);
+    toast('Pergunta adicionada!','ok');
+    fecharModal();
+    await renderConteudo();
+  } catch(e){
+    alrt.innerHTML=`<div class="alert alert-err">Erro: ${e.message}</div>`;
+  } finally { setBtnLoading(btn, false); }
+};
+
+window.excluirPergunta = function(tid, qid){
+  confirmar('Remover esta pergunta do quiz?',
+    async function(){
+      await dbRemove(`treinamentos/${tid}/quiz/${qid}`);
+      await audit('QUIZ_PERGUNTA_REMOVIDA', `Pergunta ${qid} removida do treinamento ${tid}`);
+      toast('Pergunta removida.','ok');
       await renderConteudo();
     }
   );
@@ -1777,16 +2270,34 @@ function deletarVideo(tid, vid, tituloTrein){
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   PAINEL: RELATÓRIOS / LOGS
+   PAINEL: RELATÓRIOS / LOGS (TASK-22: tabs | TASK-25: paginação)
    ═══════════════════════════════════════════════════════════════ */
 async function renderRelatorios(){
-  const data = await dbRead('logs');
-  const todos = data ? Object.values(data).sort((a,b)=>b.ts.localeCompare(a.ts)) : [];
-
-  // Filtro: admins veem só suas ações e as dos users; master vê tudo
+  // Carrega somente os 50 logs mais recentes (TASK-25)
+  const snap = await db.ref(`${ROOT}/logs`).orderByKey().limitToLast(50).once('value');
+  const entries = [];
+  snap.forEach(child => entries.unshift([child.key, child.val()])); // newest first
+  const todos = entries.map(([,v])=>v);
   const lista = S.user.role === 'master' ? todos :
     todos.filter(l => l.ator_id === S.user.uid || l.ator_role === 'user');
+  window._logsData = lista;
+  window._logsAllEntries = entries;
+  window._logsHasMore = entries.length >= 50;
 
+  document.getElementById('content').innerHTML = `
+    <div class="page-header"><h1>📋 Relatórios</h1><p>Logs de auditoria e acompanhamento de treinamentos.</p></div>
+    <div class="page-body">
+      <div class="tab-bar">
+        <button class="tab-btn active" id="tab-btn-logs" onclick="switchRelTab('logs')">📋 Logs de Auditoria</button>
+        <button class="tab-btn" id="tab-btn-treins" onclick="switchRelTab('treins')">📊 Por Treinamento</button>
+      </div>
+      <div id="rel-content"></div>
+    </div>`;
+
+  renderRelLogs(lista);
+}
+
+function renderRelLogs(lista){
   const acoes = [...new Set(lista.map(l=>l.acao))].sort();
   const rows = lista.slice(0,200).map(l=>`<tr data-acao="${l.acao}">
     <td class="text-sm">${fmtTs(l.ts)}</td>
@@ -1796,33 +2307,160 @@ async function renderRelatorios(){
     <td class="text-sm text-muted">${esc(l.detalhes||'–')}</td>
   </tr>`).join('');
 
-  document.getElementById('content').innerHTML = `
-    <div class="page-header"><h1>📋 Relatórios e Logs</h1><p>Histórico auditável de todas as ações realizadas no portal.</p></div>
-    <div class="page-body">
-      <div class="filter-bar">
-        <input type="text" id="log-search" placeholder="Buscar por usuário…" oninput="filtrarLogs()">
-        <select id="log-acao" onchange="filtrarLogs()">
-          <option value="">Todas as ações</option>
-          ${acoes.map(a=>`<option value="${a}">${fmtAcao(a)}</option>`).join('')}
-        </select>
+  document.getElementById('rel-content').innerHTML = `
+    <div class="filter-bar">
+      <input type="text" id="log-search" placeholder="Buscar por usuário…" oninput="filtrarLogs()">
+      <select id="log-acao" onchange="filtrarLogs()">
+        <option value="">Todas as ações</option>
+        ${acoes.map(a=>`<option value="${a}">${fmtAcao(a)}</option>`).join('')}
+      </select>
+    </div>
+    <div class="flex justify-between items-center mb-2">
+      <p class="section-label" style="margin:0">${lista.length} registros</p>
+      <div class="flex gap-sm">
+        <button class="btn btn-ghost btn-sm" onclick="exportarLogs()">⬇ Logs CSV</button>
+        <button class="btn btn-ghost btn-sm" onclick="exportarUsuarios()">⬇ Usuários CSV</button>
+        <button class="btn btn-ghost btn-sm" onclick="exportarProgresso()">⬇ Progresso CSV</button>
       </div>
-      <div class="flex justify-between items-center mb-2">
-        <p class="section-label" style="margin:0">${lista.length} registros</p>
-        <div class="flex gap-sm">
-          <button class="btn btn-ghost btn-sm" onclick="exportarLogs()">⬇ Logs CSV</button>
-          <button class="btn btn-ghost btn-sm" onclick="exportarUsuarios()">⬇ Usuários CSV</button>
-          <button class="btn btn-ghost btn-sm" onclick="exportarProgresso()">⬇ Progresso CSV</button>
-        </div>
-      </div>
-      ${!lista.length ? `<div class="empty-state"><div class="empty-icon">📋</div><h3>Nenhum registro encontrado</h3></div>` : `
-      <div class="card"><div class="tbl-wrap"><table id="tabela-logs">
-        <thead><tr><th>Data/Hora</th><th>Usuário</th><th>Perfil</th><th>Ação</th><th>Detalhes</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table></div></div>`}
-    </div>`;
-
-  window._logsData = lista;
+    </div>
+    ${!lista.length ? `<div class="empty-state"><div class="empty-icon">📋</div><h3>Nenhum registro encontrado</h3></div>` : `
+    <div class="card"><div class="tbl-wrap"><table id="tabela-logs">
+      <thead><tr><th>Data/Hora</th><th>Usuário</th><th>Perfil</th><th>Ação</th><th>Detalhes</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div></div>
+    <div style="text-align:center;margin-top:14px">
+      ${window._logsHasMore
+        ?`<button class="btn btn-ghost" onclick="carregarMaisLogs()">Carregar mais 50 registros</button>
+          <p class="text-sm text-muted mt-1">Exibindo ${lista.length} registros mais recentes</p>`
+        :`<p class="text-sm text-muted">Exibindo todos os ${lista.length} registros</p>`}
+    </div>`}`;
 }
+
+window.carregarMaisLogs = async function(){
+  const entries = window._logsAllEntries||[];
+  if(!entries.length) return;
+  const oldestKey = entries[entries.length-1][0];
+  const snap = await db.ref(`${ROOT}/logs`).orderByKey().endBefore(oldestKey).limitToLast(50).once('value');
+  const newEntries = [];
+  snap.forEach(child => newEntries.unshift([child.key, child.val()]));
+  window._logsAllEntries = [...entries, ...newEntries];
+  const allTodos = window._logsAllEntries.map(([,v])=>v);
+  window._logsData = S.user.role === 'master' ? allTodos :
+    allTodos.filter(l => l.ator_id === S.user.uid || l.ator_role === 'user');
+  window._logsHasMore = newEntries.length >= 50;
+  renderRelLogs(window._logsData);
+};
+
+window.switchRelTab = async function(tab){
+  document.getElementById('tab-btn-logs')?.classList.toggle('active', tab==='logs');
+  document.getElementById('tab-btn-treins')?.classList.toggle('active', tab==='treins');
+  if(tab==='logs') renderRelLogs(window._logsData||[]);
+  else await renderRelTreins();
+};
+
+async function renderRelTreins(){
+  const el = document.getElementById('rel-content');
+  el.innerHTML = `<div class="loading-panel"><div class="spinner"></div> Carregando...</div>`;
+
+  const [treinsData, usersData, concsData] = await Promise.all([
+    dbRead('treinamentos'), dbRead('usuarios'), dbRead('conclusoes')
+  ]);
+  const treins = treinsData||{};
+  const users  = usersData||{};
+  const concs  = concsData||{};
+  const totalUsers = Object.keys(users).filter(uid=>users[uid].ativo).length;
+
+  const tList = Object.entries(treins)
+    .filter(([,t])=>t.ativo!==false)
+    .sort((a,b)=>(a[1].ordem||0)-(b[1].ordem||0));
+
+  if(!tList.length){
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📊</div><h3>Nenhum treinamento cadastrado</h3></div>`;
+    return;
+  }
+
+  const statsRows = tList.map(([tid,t])=>{
+    const concluidos = Object.values(concs).filter(c=>c[tid]).length;
+    const emAndamento = Object.keys(users).filter(uid=>{
+      return !concs[uid]?.[tid] && !!concs[uid]; // tem alguma conclusão mas não este
+    }).length;
+    const naoIniciados = totalUsers - concluidos;
+    const pct = totalUsers ? Math.round((concluidos/totalUsers)*100) : 0;
+    return { tid, titulo:t.titulo, concluidos, naoIniciados, pct, totalUsers };
+  });
+
+  window._relTreinsStats = statsRows;
+  window._relTreinsConcs = concs;
+  window._relTreinsUsers = users;
+
+  const rows = statsRows.map(s=>`
+    <tr style="cursor:pointer" onclick="toggleRelTreinRow('${s.tid}')">
+      <td style="font-weight:500">${esc(s.titulo)}</td>
+      <td class="text-center">${s.totalUsers}</td>
+      <td class="text-center"><span class="badge badge-green">${s.concluidos}</span></td>
+      <td class="text-center">${s.naoIniciados}</td>
+      <td class="text-center">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="prog-bar" style="flex:1;height:6px"><div class="prog-fill" style="width:${s.pct}%"></div></div>
+          <span class="text-sm">${s.pct}%</span>
+        </div>
+      </td>
+    </tr>
+    <tr id="row-detail-${s.tid}" style="display:none">
+      <td colspan="5" style="padding:0">
+        <div id="detail-body-${s.tid}" style="padding:12px 16px;background:var(--teal-light)"></div>
+      </td>
+    </tr>`).join('');
+
+  el.innerHTML = `
+    <div class="flex justify-between items-center mb-2">
+      <p class="section-label" style="margin:0">${tList.length} treinamento(s) — ${totalUsers} usuário(s) ativo(s)</p>
+      <button class="btn btn-ghost btn-sm" onclick="exportarRelTreins()">⬇ Exportar CSV</button>
+    </div>
+    <div class="card"><div class="tbl-wrap"><table>
+      <thead><tr>
+        <th>Treinamento</th>
+        <th class="text-center">Total</th>
+        <th class="text-center">Concluídos</th>
+        <th class="text-center">Não iniciados</th>
+        <th>% Conclusão</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div></div>`;
+}
+
+window.toggleRelTreinRow = function(tid){
+  const detailRow = document.getElementById(`row-detail-${tid}`);
+  const body = document.getElementById(`detail-body-${tid}`);
+  if(!detailRow||!body) return;
+  const isOpen = detailRow.style.display !== 'none';
+  detailRow.style.display = isOpen ? 'none' : '';
+  if(!isOpen && !body.dataset.loaded){
+    body.dataset.loaded = '1';
+    const concs = window._relTreinsConcs||{};
+    const users = window._relTreinsUsers||{};
+    const concList = Object.entries(concs)
+      .filter(([uid,c])=>c[tid])
+      .map(([uid,c])=>{ const u=users[uid]; return u?{ nome:u.nome, ts:c[tid] }:null; })
+      .filter(Boolean)
+      .sort((a,b)=>a.ts.localeCompare(b.ts));
+    body.innerHTML = concList.length
+      ? `<p class="section-label" style="margin-bottom:8px">Colaboradores que concluíram</p>` +
+        concList.map(c=>`<div style="display:flex;gap:10px;padding:5px 0;border-bottom:1px solid rgba(0,0,0,.05)">
+          <span style="font-size:14px;flex:1">${esc(c.nome)}</span>
+          <span class="text-sm text-muted">${fmtData(c.ts)}</span>
+        </div>`).join('')
+      : `<p class="text-sm text-muted">Nenhum usuário concluiu este treinamento ainda.</p>`;
+  }
+};
+
+window.exportarRelTreins = function(){
+  const stats = window._relTreinsStats;
+  if(!stats?.length){ toast('Nenhum dado para exportar.','warn'); return; }
+  const header = [['Treinamento','Total Usuários','Concluídos','Não Iniciados','% Conclusão']];
+  const rows = stats.map(s=>[s.titulo,s.totalUsers,s.concluidos,s.naoIniciados,s.pct+'%']);
+  csvDownload([...header,...rows], `laadv-relatorio-treinos-${new Date().toISOString().slice(0,10)}.csv`);
+};
 
 function csvDownload(rows, filename){
   const csv = rows.map(r=>r.map(c=>`"${String(c==null?'':c).replace(/"/g,'""')}"`).join(',')).join('\n');
@@ -1940,12 +2578,16 @@ const ACAO_LABEL = {
   LOGIN:'Entrou no portal', LOGOUT:'Saiu do portal',
   CRIAR_USUARIO:'Criou usuário', EDITAR_USUARIO:'Editou usuário', DELETAR_USUARIO:'Excluiu usuário',
   ATIVAR_USUARIO:'Ativou usuário', DESATIVAR_USUARIO:'Desativou usuário',
+  BULK_ATIVACAO:'Ativação em lote', BULK_DESATIVACAO:'Desativação em lote',
   ALTERAR_SENHA:'Alterou senha', RESETAR_SENHA:'Redefiniu senha', EDITAR_PERFIL:'Editou perfil',
   CRIAR_TREINAMENTO:'Criou treinamento', EDITAR_TREINAMENTO:'Editou treinamento',
   DELETAR_TREINAMENTO:'Excluiu treinamento', ATIVAR_TREINAMENTO:'Ativou treinamento',
   DESATIVAR_TREINAMENTO:'Desativou treinamento',
   ADICIONAR_VIDEO:'Adicionou vídeo', REMOVER_VIDEO:'Removeu vídeo',
   MARCAR_VIDEO_ASSISTIDO:'Marcou vídeo como assistido',
+  COMUNICADO_CRIADO:'Publicou comunicado',
+  QUIZ_PERGUNTA_ADICIONADA:'Adicionou pergunta ao quiz', QUIZ_PERGUNTA_REMOVIDA:'Removeu pergunta do quiz',
+  QUIZ_APROVADO:'Aprovado na avaliação', QUIZ_REPROVADO:'Reprovado na avaliação',
   CONCLUIR_TREINAMENTO:'Concluiu treinamento',
   EDITAR_CONFIG:'Editou configurações', LIMPAR_LOGS:'Limpou logs', SETUP_INICIAL:'Configuração inicial',
 };
@@ -2012,6 +2654,11 @@ async function init(){
 }
 
 init();
+
+// Registra Service Worker para PWA (TASK-26)
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
 </script>
 </body>
 </html>

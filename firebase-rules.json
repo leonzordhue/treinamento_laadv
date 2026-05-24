@@ -67,6 +67,15 @@
               "$other":    { ".validate": false }
             }
           },
+          "quiz": {
+            "$qid": {
+              ".validate": "newData.hasChildren(['pergunta','opcoes','correta'])",
+              "pergunta": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 400" },
+              "opcoes":   { "$i": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200" } },
+              "correta":  { ".validate": "newData.isNumber()" },
+              "$other":   { ".validate": false }
+            }
+          },
           "$other": { ".validate": false }
         }
       },
@@ -118,6 +127,42 @@
             "$vid": {
               ".validate": "newData.isString()"
             }
+          }
+        }
+      },
+
+      /* ── COMUNICADOS ─────────────────────────────────────────────
+         Publicados por admin/master. Leitura aberta para todos.
+      ──────────────────────────────────────────────────────────── */
+      "comunicados": {
+        ".read": true,
+        ".write": true,
+        "$cid": {
+          ".validate": "newData.hasChildren(['titulo','corpo','ativo'])",
+          "titulo":     { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200" },
+          "corpo":      { ".validate": "newData.isString() && newData.val().length <= 1000" },
+          "autor_nome": { ".validate": "newData.isString()" },
+          "criado_em":  { ".validate": "newData.isString()" },
+          "ativo":      { ".validate": "newData.isBoolean()" },
+          "$other":     { ".validate": false }
+        }
+      },
+
+      /* ── RESPOSTAS DE AVALIAÇÃO ─────────────────────────────────
+         Mapeamento uid → tid → { score, total, ts, aprovado }.
+         Cada usuário grava apenas suas próprias respostas.
+      ──────────────────────────────────────────────────────────── */
+      "respostas": {
+        ".read": true,
+        "$uid": {
+          ".write": true,
+          "$tid": {
+            ".validate": "newData.hasChildren(['score','total','ts','aprovado'])",
+            "score":    { ".validate": "newData.isNumber()" },
+            "total":    { ".validate": "newData.isNumber()" },
+            "ts":       { ".validate": "newData.isString()" },
+            "aprovado": { ".validate": "newData.isBoolean()" },
+            "$other":   { ".validate": false }
           }
         }
       },

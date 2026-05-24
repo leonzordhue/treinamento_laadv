@@ -168,7 +168,7 @@
 
 ---
 
-### [~] TASK-19 — Limpeza de frags duplicados na raiz ← LEXGROUP (URGENTE)
+### [x] TASK-19 — Limpeza de frags duplicados na raiz ← LEXGROUP (URGENTE)
 **Problema:** os arquivos `*.frag.*` existem tanto na raiz do projeto quanto em `src/`. A raiz não deve ter frags.
 **O que fazer:**
 - Deletar da raiz: `_app.frag.js`, `_auth.frag.js`, `_body.frag.html`, `_firebase.frag.js`, `_render2.frag.js`, `_render_conteudo.frag.js`, `_render_inicio.frag.js`, `_render_treino.frag.js`, `_render_usuarios.frag.js`, `_style.frag.css`
@@ -178,7 +178,7 @@
 
 ---
 
-### [ ] TASK-20 — Sistema de comunicados ← LEXGROUP
+### [x] TASK-20 — Sistema de comunicados ← LEXGROUP
 **Firebase:** `laadv_portal/comunicados/{cid}` → `{ titulo, corpo, autor_nome, criado_em, ativo }`
 **O que implementar:**
 - No painel **Início** de todos os roles: seção "Comunicados" mostrando os últimos 5 ativos
@@ -190,7 +190,7 @@
 
 ---
 
-### [ ] TASK-21 — Avaliação pós-treinamento (quiz) ← LEXGROUP
+### [x] TASK-21 — Avaliação pós-treinamento (quiz) ← LEXGROUP
 **Firebase:** `laadv_portal/treinamentos/{tid}/quiz/{qid}` → `{ pergunta, opcoes: [], correta: 0..3 }`
 **Firebase:** `laadv_portal/respostas/{uid}/{tid}` → `{ score, total, ts }`
 **O que implementar:**
@@ -204,7 +204,7 @@
 
 ---
 
-### [ ] TASK-22 — Relatório por treinamento ← LEXGROUP
+### [x] TASK-22 — Relatório por treinamento ← LEXGROUP
 **O que implementar:**
 - No painel **Relatórios** (admin/master): nova aba "Por Treinamento" além dos logs
 - Tabela: Treinamento | Total usuários | Concluídos | Em andamento | Não iniciados | % conclusão
@@ -214,7 +214,7 @@
 
 ---
 
-### [ ] TASK-23 — Bulk actions para usuários ← LEXGROUP
+### [x] TASK-23 — Bulk actions para usuários ← LEXGROUP
 **O que implementar:**
 - Na tabela de usuários: coluna de checkbox no início de cada linha + checkbox "Selecionar todos"
 - Barra de ações que aparece quando ≥1 usuário selecionado: "X selecionados | [Ativar todos] [Desativar todos] [Exportar selecionados]"
@@ -224,7 +224,7 @@
 
 ---
 
-### [ ] TASK-24 — Dark mode ← LEXGROUP
+### [x] TASK-24 — Dark mode ← LEXGROUP
 **O que implementar:**
 - Botão toggle 🌙/☀️ no topbar (canto direito, ao lado do avatar)
 - Salvar preferência em `localStorage` key `laadv_theme`
@@ -242,7 +242,7 @@
 
 ---
 
-### [ ] TASK-25 — Paginação de logs ← LEXGROUP
+### [x] TASK-25 — Paginação de logs ← LEXGROUP
 **Problema:** `renderRelatorios()` carrega TODOS os logs do Firebase de uma vez — com o tempo vai ficar lento.
 **O que implementar:**
 - Usar `DB.ref('laadv_portal/logs').orderByKey().limitToLast(50)` — carregar apenas os 50 mais recentes
@@ -253,7 +253,7 @@
 
 ---
 
-### [ ] TASK-26 — PWA básico ← LEXGROUP
+### [x] TASK-26 — PWA básico ← LEXGROUP
 **Arquivos a criar:** `manifest.json` e `sw.js` na raiz
 **`manifest.json`:**
 ```json
@@ -274,20 +274,35 @@
 
 ---
 
+### [ ] TASK-28 — Hardening de segurança ← LEXGROUP (CONFIDENCIAL)
+> Documentação completa em `.claude/SECURITY_PRIVADO.md` (git-ignored, nunca commitar).
+> Não adicionar comentários explicativos no código sobre o que cada proteção faz.
+
+**A — Sanitização XSS:** criar `function sanitize(s)` e aplicar em TODO dado do Firebase renderizado via innerHTML.
+**B — Rate limiting login:** bloquear após 5 tentativas em 15 min via `laadv_portal/tentativas/{login}` no Firebase. Mensagem genérica sempre: "Usuário ou senha incorretos".
+**C — CSP meta tag:** adicionar `<meta http-equiv="Content-Security-Policy">` no head permitindo apenas domínios necessários (Firebase, YouTube, jsDelivr, Google Fonts).
+**D — LGPD exclusão:** botão "Solicitar exclusão dos meus dados" no Meu Perfil → grava em `laadv_portal/solicitacoes_exclusao/{uid}`. Painel no Config (master) para processar.
+**E — Validação de sessão:** gravar `criada_em + ua` na sessão, validar a cada navTo(), logout automático após 8h absolutas.
+**F — Sanitizar logs:** garantir que nenhuma chamada `audit()` registra senha_hash ou dados sensíveis.
+
+---
+
 ## FILA — PRINCIPAL (próxima sessão)
 
-### [ ] TASK-07 — Verificar GitHub Pages ← PRINCIPAL
-Acessar `https://leonzordhue.github.io/treinamento_laadv/` e confirmar que o portal carrega.
-Se 404: verificar Settings → Pages → branch `master` / raiz `/`.
+### [x] TASK-07 — Verificar GitHub Pages ← PRINCIPAL
+Portal online em https://leonzordhue.github.io/treinamento_laadv/ — login testado e funcionando.
 
-### [ ] TASK-08 — Firebase Rules produção ← PRINCIPAL
-No Firebase Console → Realtime Database → Regras: colar conteúdo de `firebase-rules.json` e publicar.
+### [x] TASK-08 — Firebase Rules produção ← PRINCIPAL
+Regras publicadas no Firebase Console.
 
-### [ ] TASK-18 — Commit sprint 1 Lexgroup ← PRINCIPAL
-Commit de tudo que Lexgroup fez nas TASK-09 a 17.
+### [x] TASK-18 — Commit sprint 1 Lexgroup ← PRINCIPAL
+Concluído — 20 arquivos, 3699 inserções. Push feito.
 
 ### [ ] TASK-27 — Commit sprint 2 Lexgroup ← PRINCIPAL
-Após Lexgroup concluir TASK-19 a 26: revisar, testar via preview e fazer commit+push.
+Após Lexgroup concluir TASK-19 a 26.
+
+### [ ] TASK-29 — Commit sprint segurança ← PRINCIPAL
+Após TASK-28 concluída: revisar, testar via preview e fazer commit+push (sem mencionar "segurança" na mensagem de commit).
 
 ---
 
@@ -312,3 +327,11 @@ Após Lexgroup concluir TASK-19 a 26: revisar, testar via preview e fazer commit
 | 2026-05-24 | Lexgroup   | TASK-15 concluída — Fragmentação src/*.frag.*: 10 frags ≤300 linhas cada, build.py atualizado |
 | 2026-05-24 | Lexgroup   | TASK-16 concluída — .gitignore criado, pastas legacy/ movidas com README |
 | 2026-05-24 | Lexgroup   | TASK-17 concluída — Timer inatividade 30min: aviso 2min antes, continuarSessao(), logout automático |
+| 2026-05-24 | Lexgroup   | TASK-19 concluída — Limpeza frags raiz, core/ → legacy/core/ |
+| 2026-05-24 | Lexgroup   | TASK-20 concluída — Sistema comunicados: CRUD, toggle ativo, cards com "Ler mais", data relativa |
+| 2026-05-24 | Lexgroup   | TASK-21 concluída — Quiz: iniciarQuiz, renderQuestaoAtual, selecionarOpcaoQuiz, proximaQuestao, finalizarQuiz; resultado + certificado; histórico no perfil; firebase-rules.json com respostas/ e quiz/ |
+| 2026-05-24 | Lexgroup   | TASK-22 concluída — Relatório por treinamento: tab "Por Treinamento", tabela com % conclusão, rows expansíveis, exportar CSV |
+| 2026-05-24 | Lexgroup   | TASK-23 concluída — Bulk actions: checkboxes, sel-all, bulk-bar, bulkAtivar/bulkDesativar/bulkExportar, audit em lote |
+| 2026-05-24 | Lexgroup   | TASK-24 concluída — Dark mode: body.dark CSS vars, toggleDarkMode(), localStorage, botão ☀️/🌙 no topbar |
+| 2026-05-24 | Lexgroup   | TASK-25 concluída — Paginação logs: limitToLast(50), carregarMaisLogs() com endBefore(), indicador de total |
+| 2026-05-24 | Lexgroup   | TASK-26 concluída — PWA: manifest.json, sw.js (cache-first shell, network-only Firebase), meta theme-color, SW registration |

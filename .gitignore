@@ -20,3 +20,8 @@ __pycache__/
 *.env
 .env.*
 secrets.*
+
+# Documentação de segurança — NUNCA publicar
+.claude/SECURITY_PRIVADO.md
+.claude/INCIDENT_RESPONSE.md
+.claude/LGPD_MAPEAMENTO.md
