@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "laadv-orchestrator": {
+      "command": "python",
+      "args": ["orchestrator.py"],
+      "cwd": "C:\\Users\\peneto\\Desktop\\Treinamento LAADV",
+      "description": "Canal de comunicação direta Principal ↔ Lexgroup (AKE/UFT-1.0)"
+    }
+  }
+}
