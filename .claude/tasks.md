@@ -312,7 +312,7 @@ Concluído — commit `ef70147` refactor: melhorias de robustez e conformidade n
 
 ---
 
-### [ ] TASK-30 — Bug: reativar comunicados ← LEXGROUP
+### [x] TASK-30 — Bug: reativar comunicados ← LEXGROUP
 **Arquivo:** `index.html` — função `buildComunicadosHtml()`
 **Problema:** comunicados desativados somem da interface e não há como reativá-los.
 **O que implementar:**
@@ -324,7 +324,7 @@ Concluído — commit `ef70147` refactor: melhorias de robustez e conformidade n
 
 ---
 
-### [ ] TASK-31 — Reordenar treinamentos com botões ↑↓ ← LEXGROUP
+### [x] TASK-31 — Reordenar treinamentos com botões ↑↓ ← LEXGROUP
 **Arquivo:** `index.html` — função `renderConteudo()`
 **Problema:** o campo `ordem` existe mas o usuário precisa digitar números — sem UI visual.
 **O que implementar:**
@@ -339,7 +339,7 @@ Concluído — commit `ef70147` refactor: melhorias de robustez e conformidade n
 
 ---
 
-### [ ] TASK-32 — Importar usuários via CSV ← LEXGROUP
+### [x] TASK-32 — Importar usuários via CSV ← LEXGROUP
 **Arquivo:** `index.html` — painel Usuários
 **O que implementar:**
 - Botão "Importar CSV" no cabeçalho do painel Usuários (ao lado do "+ Novo Usuário")
@@ -358,7 +358,7 @@ Concluído — commit `ef70147` refactor: melhorias de robustez e conformidade n
 
 ---
 
-### [ ] TASK-33 — Badge de comunicados não lidos na sidebar ← LEXGROUP
+### [x] TASK-33 — Badge de comunicados não lidos na sidebar ← LEXGROUP
 **Arquivo:** `index.html` — função `buildNav()`
 **O que implementar:**
 - No item "Início" da sidebar, adicionar um badge numérico com a contagem de comunicados ativos não vistos
@@ -371,7 +371,7 @@ Concluído — commit `ef70147` refactor: melhorias de robustez e conformidade n
 
 ---
 
-### [ ] TASK-34 — Limpeza de dead code ← LEXGROUP
+### [x] TASK-34 — Limpeza de dead code ← LEXGROUP
 **Arquivo:** `index.html` — função `renderRelTreins()`
 **O que fazer:**
 - Remover a variável `emAndamento` e seu cálculo (linha dentro do `.map()` em `renderRelTreins`) — ela é calculada mas nunca usada
@@ -382,8 +382,8 @@ Concluído — commit `ef70147` refactor: melhorias de robustez e conformidade n
 
 ## FILA — PRINCIPAL (sprint 3)
 
-### [ ] TASK-35 — Commit sprint 3 ← PRINCIPAL
-Após Lexgroup concluir TASK-30 a 34: revisar, testar e fazer commit+push.
+### [x] TASK-35 — Commit sprint 3 ← PRINCIPAL
+Concluído — sprint 3 revisado e publicado.
 
 ---
 
@@ -420,3 +420,9 @@ Após Lexgroup concluir TASK-30 a 34: revisar, testar e fazer commit+push.
 | 2026-05-25 | Principal  | TASK-27 e TASK-29 marcadas [x] — commits já existiam no repo |
 | 2026-05-25 | Principal  | Auditoria completa do portal — 3 bugs + 4 lacunas identificadas |
 | 2026-05-25 | Principal  | TASK-30 a 34 enfileiradas para Lexgroup Sprint 3 |
+| 2026-05-25 | Lexgroup   | TASK-30 concluída — seção "Comunicados inativos" com botão Reativar em buildComunicadosHtml |
+| 2026-05-25 | Lexgroup   | TASK-31 concluída — botões ↑↓ em renderConteudo, reordenarTrein(), campo Ordem removido do modal |
+| 2026-05-25 | Lexgroup   | TASK-32 concluída — botão Importar CSV, processarImportCSV(), baixarModeloCSV(), validação completa |
+| 2026-05-25 | Lexgroup   | TASK-33 concluída — .nav-badge CSS, S.comBadge em buildNav, atualizarBadgeComunicados(), reset em renderInicio |
+| 2026-05-25 | Lexgroup   | TASK-34 concluída — emAndamento removido de renderRelTreins |
+| 2026-05-25 | Principal  | TASK-35 concluída — sprint 3 revisado e publicado |
