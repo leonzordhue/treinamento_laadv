@@ -298,11 +298,92 @@ Regras publicadas no Firebase Console.
 ### [x] TASK-18 — Commit sprint 1 Lexgroup ← PRINCIPAL
 Concluído — 20 arquivos, 3699 inserções. Push feito.
 
-### [ ] TASK-27 — Commit sprint 2 Lexgroup ← PRINCIPAL
-Após Lexgroup concluir TASK-19 a 26.
+### [x] TASK-27 — Commit sprint 2 Lexgroup ← PRINCIPAL
+Concluído — commit `0300591` feat: sprint 2 Lexgroup.
 
-### [ ] TASK-29 — Commit sprint segurança ← PRINCIPAL
-Após TASK-28 concluída: revisar, testar via preview e fazer commit+push (sem mencionar "segurança" na mensagem de commit).
+### [x] TASK-29 — Commit sprint segurança ← PRINCIPAL
+Concluído — commit `ef70147` refactor: melhorias de robustez e conformidade no portal.
+
+---
+
+## FILA — SPRINT 3 (Lexgroup)
+
+> Leia `CLAUDE.md` antes de executar. Execute em sequência. Marque `[x]` ao concluir cada task.
+
+---
+
+### [ ] TASK-30 — Bug: reativar comunicados ← LEXGROUP
+**Arquivo:** `index.html` — função `buildComunicadosHtml()`
+**Problema:** comunicados desativados somem da interface e não há como reativá-los.
+**O que implementar:**
+- No painel Início, para admin/master: adicionar aba ou seção "Comunicados inativos" logo abaixo dos ativos
+- Listar comunicados onde `ativo === false`, mostrando título e data
+- Botão "Reativar" em cada um → chama `toggleComunicado(cid, true)` já existente
+- Se não houver inativos, não exibir a seção
+- Nenhuma nova estrutura no Firebase — só ajuste de UI
+
+---
+
+### [ ] TASK-31 — Reordenar treinamentos com botões ↑↓ ← LEXGROUP
+**Arquivo:** `index.html` — função `renderConteudo()`
+**Problema:** o campo `ordem` existe mas o usuário precisa digitar números — sem UI visual.
+**O que implementar:**
+- Em cada card de treinamento no painel Conteúdo, adicionar dois botões: `↑` e `↓` (ao lado dos botões "Expandir" e "Editar")
+- `↑` troca a `ordem` do treinamento atual com o anterior na lista ordenada
+- `↓` troca com o próximo
+- O primeiro da lista não tem `↑`. O último não tem `↓`
+- Salvar a nova ordem no Firebase via `dbUpdate('treinamentos/{tid}', { ordem: novoValor })`
+- Chamar `audit('REORDENAR_TREINAMENTO', 'Reordenou: título')`
+- Após salvar, re-renderizar `renderConteudo()`
+- Não exibir o campo "Ordem de exibição" numérico no modal de edição (remover esse campo do `abrirFormTrein()`)
+
+---
+
+### [ ] TASK-32 — Importar usuários via CSV ← LEXGROUP
+**Arquivo:** `index.html` — painel Usuários
+**O que implementar:**
+- Botão "Importar CSV" no cabeçalho do painel Usuários (ao lado do "+ Novo Usuário")
+- Modal com: instrução de formato + `<input type="file" accept=".csv">` + botão "Processar"
+- Formato esperado do CSV (primeira linha = cabeçalho):
+  ```
+  nome,usuario,senha,role,setor,cargo
+  João Silva,joao.silva,Senha123,user,Jurídico,Advogado
+  ```
+- Processar linha por linha: hashear `senha` com `sha256()`, verificar se `usuario` já existe, criar via `dbPush('usuarios', {...})`
+- Ao final: toast com resumo "X criados, Y com erro (login duplicado)"
+- Auditoria: `audit('IMPORTAR_USUARIOS', 'X usuários importados via CSV')`
+- Roles válidos: `user`, `admin`. Se inválido ou ausente → `user`
+- Senha mínima 6 chars. Se inválida → pular com erro
+- Incluir botão "Baixar modelo CSV" que gera um CSV de exemplo via `csvDownload()`
+
+---
+
+### [ ] TASK-33 — Badge de comunicados não lidos na sidebar ← LEXGROUP
+**Arquivo:** `index.html` — função `buildNav()`
+**O que implementar:**
+- No item "Início" da sidebar, adicionar um badge numérico com a contagem de comunicados ativos não vistos
+- "Não visto" = comunicado criado após o timestamp salvo em `localStorage` key `laadv_comun_visto` (ISO string da última vez que o usuário abriu o painel Início)
+- Ao renderizar `renderInicio()`: atualizar `localStorage.setItem('laadv_comun_visto', new Date().toISOString())`
+- Badge aparece em vermelho ao lado do label "Início": `<span class="nav-badge">3</span>`
+- CSS do badge: `position:absolute; right:12px; background:var(--danger); color:#fff; font-size:10px; font-weight:700; border-radius:99px; padding:1px 6px; min-width:16px; text-align:center`
+- Se contagem = 0, não renderizar o badge
+- Ao trocar de painel e voltar para Início, badge deve sumir
+
+---
+
+### [ ] TASK-34 — Limpeza de dead code ← LEXGROUP
+**Arquivo:** `index.html` — função `renderRelTreins()`
+**O que fazer:**
+- Remover a variável `emAndamento` e seu cálculo (linha dentro do `.map()` em `renderRelTreins`) — ela é calculada mas nunca usada
+- Verificar se há outros `let`/`const` declarados e não referenciados no arquivo — remover se encontrar
+- IC ≥ 0.9 — não alterar nenhuma lógica, apenas remover dead code confirmado
+
+---
+
+## FILA — PRINCIPAL (sprint 3)
+
+### [ ] TASK-35 — Commit sprint 3 ← PRINCIPAL
+Após Lexgroup concluir TASK-30 a 34: revisar, testar e fazer commit+push.
 
 ---
 
@@ -336,3 +417,6 @@ Após TASK-28 concluída: revisar, testar via preview e fazer commit+push (sem m
 | 2026-05-24 | Lexgroup   | TASK-25 concluída — Paginação logs: limitToLast(50), carregarMaisLogs() com endBefore(), indicador de total |
 | 2026-05-24 | Lexgroup   | TASK-26 concluída — PWA: manifest.json, sw.js (cache-first shell, network-only Firebase), meta theme-color, SW registration |
 | 2026-05-24 | Lexgroup   | TASK-28 concluída — A: sanitize()+esc(); B: rate-limit login 5x/15min; C: CSP meta tag; D: LGPD exclusão (solicitarExclusaoDados+processarExclusao); E: sessão 8h+UA; F: scrub SHA-256 em audit() |
+| 2026-05-25 | Principal  | TASK-27 e TASK-29 marcadas [x] — commits já existiam no repo |
+| 2026-05-25 | Principal  | Auditoria completa do portal — 3 bugs + 4 lacunas identificadas |
+| 2026-05-25 | Principal  | TASK-30 a 34 enfileiradas para Lexgroup Sprint 3 |
