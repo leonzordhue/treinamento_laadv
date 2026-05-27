@@ -426,3 +426,4 @@ Concluído — sprint 3 revisado e publicado.
 | 2026-05-25 | Lexgroup   | TASK-33 concluída — .nav-badge CSS, S.comBadge em buildNav, atualizarBadgeComunicados(), reset em renderInicio |
 | 2026-05-25 | Lexgroup   | TASK-34 concluída — emAndamento removido de renderRelTreins |
 | 2026-05-25 | Principal  | TASK-35 concluída — sprint 3 revisado e publicado |
+| 2026-05-26 | Nexus      | Auditoria completa: 1 crítico + 3 altos + 3 médios + 5 baixos — 9 correções aplicadas em index.html e firebase-rules.json |

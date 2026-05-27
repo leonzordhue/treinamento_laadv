@@ -26,6 +26,7 @@
       "usuarios": {
         ".read": true,
         ".write": true,
+        ".indexOn": ["usuario"],
         "$uid": {
           ".validate": "newData.hasChildren(['nome','usuario','senha_hash','role','ativo'])",
           "nome":          { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120" },

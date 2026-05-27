@@ -38,6 +38,7 @@
   --sh-lg:0 8px 36px rgba(11,74,68,.15);
   --r:10px; --r-sm:7px; --r-lg:16px;
   --sidebar:240px; --topbar:62px; --akebar:30px;
+  --gap:18px;
 }
 
 /* ── DARK MODE (TASK-24) ── */
@@ -581,13 +582,17 @@ function abrirModal(titulo, corpo, rodape=''){
 }
 function fecharModal(){ document.getElementById('modal-overlay').classList.remove('open'); }
 
+let _confirmCb = null;
 function confirmar(msg, onSim){
+  _confirmCb = onSim;
   abrirModal('Confirmar ação',
     `<p style="font-size:15px;line-height:1.6">${msg}</p>`,
     `<button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
-     <button class="btn btn-danger" onclick="fecharModal();(${onSim.toString()})()">Confirmar</button>`
+     <button class="btn btn-danger" onclick="window._execConfirm()">Confirmar</button>`
   );
 }
+// Executa a callback por referência (não serializa a função — preserva o closure)
+window._execConfirm = function(){ const cb=_confirmCb; _confirmCb=null; fecharModal(); if(typeof cb==='function') cb(); };
 
 /* ── MOBILE SIDEBAR ── */
 function fecharSidebarMobile(){
@@ -691,6 +696,8 @@ async function navTo(panel){
   buildNav();
   fecharSidebarMobile();
   await renderPanel(panel);
+  // Recalcula o badge ao sair de "Início" para refletir comunicados novos enquanto navega.
+  if(panel!=='inicio') atualizarBadgeComunicados();
 }
 
 /* ── ROLES ─────────────────────────────────────────────────────── */
@@ -1424,10 +1431,11 @@ async function selecionarVideo(tid, vid, idx){
 
 window.marcarVideoAssistido = async function(tid, vid){
   const uid = S.user.uid;
-  await dbSet(`progresso/${uid}/${tid}/${vid}`, new Date().toISOString());
+  const ts = new Date().toISOString();
+  await dbSet(`progresso/${uid}/${tid}/${vid}`, ts);
   await audit('MARCAR_VIDEO_ASSISTIDO', `Vídeo ${vid} do treinamento ${tid}`);
   if(!window._vidProgresso) window._vidProgresso = {};
-  window._vidProgresso[vid] = new Date().toISOString();
+  window._vidProgresso[vid] = ts;
 
   // atualiza UI do botão sem re-renderizar tudo
   const btnArea = document.getElementById('assistido-action');
@@ -1603,8 +1611,9 @@ window.gerarCertificado = async function(uid, tid){
   const hoje = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
 
   const w = window.open('','_blank','width=900,height=650');
+  if(!w){ toast('Permita pop-ups para gerar o certificado.','warn'); return; }
   w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-  <title>Certificado — ${u.nome}</title>
+  <title>Certificado — ${esc(u.nome)}</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
@@ -1628,13 +1637,13 @@ window.gerarCertificado = async function(uid, tid){
     <div class="logo">LA</div>
     <div class="org">Luís Albert Advocacia</div>
     <div class="cert-label">Certificamos que</div>
-    <div><span class="cert-name">${u.nome}</span></div>
+    <div><span class="cert-name">${esc(u.nome)}</span></div>
     <p class="cert-text">concluiu com êxito o treinamento</p>
-    <div class="cert-course">${t.titulo}</div>
+    <div class="cert-course">${esc(t.titulo)}</div>
     <div class="cert-date">concluído em ${dataConclusao}</div>
     <div class="cert-sign">
       <strong>Luís Albert Advocacia — Portal de Treinamentos</strong>
-      <p>${u.setor||''}</p>
+      <p>${esc(u.setor||'')}</p>
     </div>
     <div class="cert-footer">Documento gerado em ${hoje} · AKE/UFT-1.0 · Portal de Treinamentos LAADV</div>
   </div>
@@ -1829,10 +1838,10 @@ async function renderUsuarios(){
       <td>
         <div class="td-actions">
           ${pode&&!isSelf ? `<button class="btn btn-ghost btn-sm" onclick="abrirFormUsuario('${uid}')">Editar</button>` : ''}
-          ${pode&&!isSelf&&u.ativo ? `<button class="btn btn-ghost btn-sm" onclick="confirmarDesativar('${uid}','${esc(u.nome)}')">Desativar</button>` : ''}
+          ${pode&&!isSelf&&u.ativo ? `<button class="btn btn-ghost btn-sm" onclick="confirmarDesativar('${uid}','${jsAttr(u.nome)}')">Desativar</button>` : ''}
           ${pode&&!isSelf&&!u.ativo ? `<button class="btn btn-success btn-sm" onclick="toggleAtivo('${uid}',true)">Ativar</button>` : ''}
           ${podeResetarSenha(u.role)&&!isSelf ? `<button class="btn btn-ghost btn-sm" onclick="resetarSenha('${uid}')">🔑 Resetar Senha</button>` : ''}
-          ${S.user.role==='master'&&!isSelf ? `<button class="btn btn-danger btn-sm" onclick="deletarUsuario('${uid}','${esc(u.nome)}')">Excluir</button>` : ''}
+          ${S.user.role==='master'&&!isSelf ? `<button class="btn btn-danger btn-sm" onclick="deletarUsuario('${uid}','${jsAttr(u.nome)}')">Excluir</button>` : ''}
           ${isSelf ? `<span class="text-sm text-muted">Você</span>` : ''}
         </div>
       </td>
@@ -1957,14 +1966,14 @@ window.processarImportCSV = async function(btn){
     const texto = await fileEl.files[0].text();
     const linhas = texto.split('\n').map(l=>l.trim()).filter(Boolean);
     if(linhas.length < 2){ alrt.innerHTML=`<div class="alert alert-err">CSV sem dados.</div>`; setBtnLoading(btn,false); return; }
-    const cabecalho = linhas[0].split(',').map(c=>c.replace(/^"|"$/g,'').trim().toLowerCase());
+    const cabecalho = parseCsvLinha(linhas[0]).map(c=>c.toLowerCase());
     const idx = { nome:cabecalho.indexOf('nome'), usuario:cabecalho.indexOf('usuario'), senha:cabecalho.indexOf('senha'), role:cabecalho.indexOf('role'), setor:cabecalho.indexOf('setor'), cargo:cabecalho.indexOf('cargo') };
     if(idx.nome<0||idx.usuario<0||idx.senha<0){ alrt.innerHTML=`<div class="alert alert-err">Colunas obrigatórias ausentes: nome, usuario, senha.</div>`; setBtnLoading(btn,false); return; }
     const usuariosExistentes = await dbRead('usuarios');
     const loginsExistentes = new Set(usuariosExistentes ? Object.values(usuariosExistentes).map(u=>u.usuario) : []);
     let criados = 0, erros = [];
     for(let li = 1; li < linhas.length; li++){
-      const cols = linhas[li].split(',').map(c=>c.replace(/^"|"$/g,'').trim());
+      const cols = parseCsvLinha(linhas[li]);
       const nome = cols[idx.nome]||'';
       const usuario = cols[idx.usuario]||'';
       const senha = cols[idx.senha]||'';
@@ -1995,10 +2004,10 @@ window.processarImportCSV = async function(btn){
 function abrirFormUsuario(uid=null){
   dbRead(uid ? `usuarios/${uid}` : null).then(u=>{
     const edit = !!uid;
+    // Apenas master pode atribuir perfis admin/master. Admin só pode criar/editar participantes.
     const roleOptions = [
       { v:'user',   l:'Participante' },
-      { v:'admin',  l:'Administrador' },
-      ...(S.user.role==='master' ? [{ v:'master', l:'Super Administrador' }] : []),
+      ...(S.user.role==='master' ? [{ v:'admin', l:'Administrador' }, { v:'master', l:'Super Administrador' }] : []),
     ].map(o=>`<option value="${o.v}"${u&&u.role===o.v?' selected':''}>${o.l}</option>`).join('');
 
     const corpo = `
@@ -2047,6 +2056,7 @@ async function salvarUsuario(uid=null, btn=null){
   if(!uid && !user){ alrt.innerHTML=`<div class="alert alert-err">O login é obrigatório.</div>`; return; }
   if(!uid && !/^[a-z0-9._]+$/.test(user)){ alrt.innerHTML=`<div class="alert alert-err">Login inválido. Use letras minúsculas, números, pontos ou underlines.</div>`; return; }
   if(!uid && (!passEl.value || passEl.value.length < 6)){ alrt.innerHTML=`<div class="alert alert-err">Informe uma senha inicial de pelo menos 6 caracteres.</div>`; return; }
+  if(S.user.role !== 'master' && role !== 'user'){ alrt.innerHTML=`<div class="alert alert-err">Você não tem permissão para atribuir o perfil selecionado.</div>`; return; }
 
   setBtnLoading(btn, true);
   try {
@@ -2135,7 +2145,7 @@ async function renderConteudo(){
           <div class="ci-vid-title">${esc(v.titulo)}</div>
           ${v.duracao?`<div class="ci-vid-dur">⏱ ${esc(v.duracao)}</div>`:''}
         </div>
-        <button class="btn btn-danger btn-sm" onclick="excluirVideoInline('${tid}','${vid}','${esc(t.titulo)}')">✕</button>
+        <button class="btn btn-danger btn-sm" onclick="excluirVideoInline('${tid}','${vid}','${jsAttr(t.titulo)}')">✕</button>
       </div>`).join('') || `<p class="text-sm text-muted" style="padding:8px 0">Nenhum vídeo ainda.</p>`;
 
     const addForm = `
@@ -2185,7 +2195,7 @@ async function renderConteudo(){
               ${i < lista.length-1 ? `<button class="btn btn-ghost btn-sm" onclick="reordenarTrein('${tid}','down')" title="Mover para baixo">↓</button>` : ''}
               <button class="btn btn-ghost btn-sm" onclick="expandirTrein('${tid}')">${expandido?'▲ Recolher':'▼ Expandir'}</button>
               <button class="btn btn-ghost btn-sm" onclick="abrirFormTrein('${tid}')">✏ Editar</button>
-              ${S.user.role==='master'?`<button class="btn btn-danger btn-sm" onclick="deletarTreinComCheck('${tid}','${esc(t.titulo)}')">Excluir</button>`:''}
+              ${S.user.role==='master'?`<button class="btn btn-danger btn-sm" onclick="deletarTreinComCheck('${tid}','${jsAttr(t.titulo)}')">Excluir</button>`:''}
             </div>
           </div>
         </div>
@@ -2416,7 +2426,7 @@ async function abrirGerenciarVideos(tid){
         <div style="font-weight:500;font-size:14px">${esc(v.titulo)}</div>
         ${v.duracao?`<div class="text-sm text-muted">⏱ ${v.duracao}</div>`:''}
       </div>
-      <button class="btn btn-danger btn-sm" onclick="deletarVideo('${tid}','${vid}','${esc(t.titulo)}')">✕</button>
+      <button class="btn btn-danger btn-sm" onclick="deletarVideo('${tid}','${vid}','${jsAttr(t.titulo)}')">✕</button>
     </div>`).join('') || `<p class="text-sm text-muted" style="padding:12px 0">Nenhum vídeo cadastrado ainda.</p>`;
 
   abrirModal(`Vídeos: ${t.titulo}`,
@@ -2516,7 +2526,7 @@ function renderRelLogs(lista){
       </select>
     </div>
     <div class="flex justify-between items-center mb-2">
-      <p class="section-label" style="margin:0">${lista.length} registros</p>
+      <p class="section-label" style="margin:0">${lista.length} registro(s) carregado(s)</p>
       <div class="flex gap-sm">
         <button class="btn btn-ghost btn-sm" onclick="exportarLogs()">⬇ Logs CSV</button>
         <button class="btn btn-ghost btn-sm" onclick="exportarUsuarios()">⬇ Usuários CSV</button>
@@ -2748,7 +2758,7 @@ async function renderConfig(){
                 <div style="font-weight:500;font-size:14px">${esc(s.nome)}</div>
                 <div class="text-sm text-muted">Solicitado em ${fmtTs(s.ts)}</div>
               </div>
-              <button class="btn btn-danger btn-sm" onclick="processarExclusao('${uid}','${esc(s.nome)}')">Processar</button>
+              <button class="btn btn-danger btn-sm" onclick="processarExclusao('${uid}','${jsAttr(s.nome)}')">Processar</button>
             </div>`).join('')}
       </div>
     </div>`;
@@ -2802,6 +2812,32 @@ function iniciais(nome){ return (nome||'?').split(' ').slice(0,2).map(p=>p[0]).j
 function primeiroNome(nome){ return (nome||'').split(' ')[0]; }
 function sanitize(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
 function esc(s){ return sanitize(s); }
+// Escapa para uso DENTRO de string JS em atributo HTML (onclick="fn('...')").
+// Necessário porque esc() converte ' em &#039;, que o parser decodifica de volta para ' e quebra o JS.
+function jsAttr(s){
+  return String(s==null?'':s)
+    .replace(/\\/g,'\\\\').replace(/'/g,"\\'")
+    .replace(/\r?\n/g,' ')
+    .replace(/&/g,'&amp;').replace(/"/g,'&quot;')
+    .replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+// Parser de linha CSV que respeita aspas duplas e vírgulas internas.
+function parseCsvLinha(linha){
+  const out=[]; let cur='', emAspas=false;
+  for(let i=0;i<linha.length;i++){
+    const ch=linha[i];
+    if(emAspas){
+      if(ch==='"'){ if(linha[i+1]==='"'){ cur+='"'; i++; } else emAspas=false; }
+      else cur+=ch;
+    } else {
+      if(ch==='"') emAspas=true;
+      else if(ch===',') { out.push(cur); cur=''; }
+      else cur+=ch;
+    }
+  }
+  out.push(cur);
+  return out.map(c=>c.trim());
+}
 function fmtTs(ts){ try{ return new Date(ts).toLocaleString('pt-BR'); }catch{ return ts; } }
 function fmtData(ts){ try{ return new Date(ts).toLocaleDateString('pt-BR'); }catch{ return ts; } }
 const ACAO_LABEL = {
